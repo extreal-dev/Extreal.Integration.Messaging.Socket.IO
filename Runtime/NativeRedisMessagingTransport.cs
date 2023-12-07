@@ -1,21 +1,15 @@
 #if !UNITY_WEBGL || UNITY_EDITOR
 using Cysharp.Threading.Tasks;
-using Extreal.Core.Logging;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using UnityEngine;
-using UniRx;
 using SocketIOClient;
 using Extreal.Integration.Messaging.Common;
+using System.Text.Json;
 
 namespace Extreal.Integration.Messaging.Redis
 {
     public class NativeRedisMessagingTransport : RedisMessagingTransport
     {
         private SocketIO ioClient;
-        private readonly CompositeDisposable disposables = new CompositeDisposable();
-
-        private static readonly ELogger Logger = LoggingManager.GetLogger(nameof(ExtrealMessagingClient));
 
         public NativeRedisMessagingTransport(RedisMessagingConfig messagingConfig) : base(messagingConfig)
         {
@@ -72,11 +66,7 @@ namespace Extreal.Integration.Messaging.Redis
         protected override void DoReleaseManagedResources()
             => StopSocketAsync().Forget();
 
-        [SuppressMessage("Usage", "CC0021")]
-        protected override async UniTask DoSendMessageAsync(string message)
-            => await ioClient.EmitAsync("message", message);
-
-        protected override async UniTask<List<RoomResponse>> DoListRoomsAsync()
+        protected override async UniTask<RoomList> DoListRoomsAsync()
         {
             var roomList = default(RoomList);
             await (await GetSocketAsync()).EmitAsync(
@@ -84,7 +74,7 @@ namespace Extreal.Integration.Messaging.Redis
                 response => roomList = response.GetValue<RoomList>()
             );
             await UniTask.WaitUntil(() => roomList != null);
-            return roomList?.Rooms ?? new List<RoomResponse>();
+            return roomList;
         }
 
         protected override async UniTask<string> DoConnectAsync(MessagingConnectionConfig connectionConfig)
@@ -103,6 +93,10 @@ namespace Extreal.Integration.Messaging.Redis
 
         protected override UniTask DoDisconnectAsync()
             => StopSocketAsync();
+
+        [SuppressMessage("Usage", "CC0021")]
+        protected override async UniTask DoSendMessageAsync(string message)
+            => await ioClient.EmitAsync("message", message);
 
         private void DisconnectedEventHandler(object sender, string e) => UniTask.Void(async () =>
         {
@@ -131,7 +125,7 @@ namespace Extreal.Integration.Messaging.Redis
             await UniTask.SwitchToMainThread();
 
             var dataStr = response.GetValue<string>();
-            var message = JsonUtility.FromJson<Message>(dataStr);
+            var message = JsonSerializer.Deserialize<Message>(dataStr);
 
             if (message.MessageContent == "delete room")
             {

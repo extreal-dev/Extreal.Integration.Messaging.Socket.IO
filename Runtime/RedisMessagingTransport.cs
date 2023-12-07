@@ -4,11 +4,11 @@ using Extreal.Core.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using UnityEngine;
 using UniRx;
 using System.Text.Json.Serialization;
 using Extreal.Integration.Messaging.Common;
 using System.Linq;
+using System.Text.Json;
 
 namespace Extreal.Integration.Messaging.Redis
 {
@@ -125,22 +125,14 @@ namespace Extreal.Integration.Messaging.Redis
 
         protected abstract void DoReleaseManagedResources();
 
-        public async UniTask SendMessageAsync(string jsonMessage, string to = default)
-        {
-            var message = JsonUtility.ToJson(new Message(UserIdentityLocal, to, jsonMessage));
-            await DoSendMessageAsync(message);
-        }
-
-        [SuppressMessage("Usage", "CC0021")]
-        protected abstract UniTask DoSendMessageAsync(string message);
-
         public async UniTask<List<MessagingRoomInfo>> ListRoomsAsync()
         {
             var roomResponses = await DoListRoomsAsync();
-            return roomResponses.Select(roomResponse => new MessagingRoomInfo(roomResponse.Id, roomResponse.Name)).ToList();
+            return roomResponses?.Rooms.Select(roomResponse => new MessagingRoomInfo(roomResponse.Id, roomResponse.Name)).ToList()
+                ?? new List<MessagingRoomInfo>();
         }
 
-        protected abstract UniTask<List<RoomResponse>> DoListRoomsAsync();
+        protected abstract UniTask<RoomList> DoListRoomsAsync();
 
         public async UniTask ConnectAsync(MessagingConnectionConfig connectionConfig)
         {
@@ -179,6 +171,20 @@ namespace Extreal.Integration.Messaging.Redis
         public UniTask DeleteRoomAsync()
             => SendMessageAsync("delete room");
 
+        public async UniTask SendMessageAsync(string jsonMessage, string to = default)
+        {
+            var message = JsonSerializer.Serialize(new Message
+            {
+                From = UserIdentityLocal,
+                To = to,
+                MessageContent = jsonMessage
+            });
+            await DoSendMessageAsync(message);
+        }
+
+        [SuppressMessage("Usage", "CC0021")]
+        protected abstract UniTask DoSendMessageAsync(string message);
+
         [SuppressMessage("Usage", "CC0047")]
         public class RoomList
         {
@@ -186,23 +192,17 @@ namespace Extreal.Integration.Messaging.Redis
             public List<RoomResponse> Rooms { get; set; }
         }
 
-        [Serializable]
+        [SuppressMessage("Usage", "CC0047")]
         public class Message
         {
-            public string From => from;
-            [SerializeField, SuppressMessage("Usage", "CC0052")] private string from;
+            [JsonPropertyName("from")]
+            public string From { get; set; }
 
-            [SerializeField, SuppressMessage("Usage", "CC0052"), SuppressMessage("Usage", "IDE0052")] private string to;
+            [JsonPropertyName("to")]
+            public string To { get; set; }
 
-            public string MessageContent => messageContent;
-            [SerializeField, SuppressMessage("Usage", "CC0052")] private string messageContent;
-
-            public Message(string from, string to, string messageContent)
-            {
-                this.from = from;
-                this.to = to;
-                this.messageContent = messageContent;
-            }
+            [JsonPropertyName("messageContent")]
+            public string MessageContent { get; set; }
         }
     }
 }
