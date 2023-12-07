@@ -1,4 +1,3 @@
-#if !UNITY_WEBGL || UNITY_EDITOR
 using Cysharp.Threading.Tasks;
 using Extreal.Core.Common.System;
 using Extreal.Core.Logging;
@@ -7,47 +6,105 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using UniRx;
-using SocketIOClient;
 using System.Text.Json.Serialization;
 using Extreal.Integration.Messaging.Common;
+using System.Linq;
 
 namespace Extreal.Integration.Messaging.Redis
 {
-    public class RedisMessagingTransport : DisposableBase, IExtrealMessagingTransport
+    public abstract class RedisMessagingTransport : DisposableBase, IExtrealMessagingTransport
     {
         public bool IsConnected { get; private set; }
+        protected void SetConnectStatus(bool isConnected)
+            => IsConnected = isConnected;
 
         public IObservable<string> OnConnected => onConnected;
         private readonly Subject<string> onConnected;
+        protected void FireOnConnected(string userId)
+        {
+            if (Logger.IsDebug())
+            {
+                Logger.LogDebug($"{nameof(FireOnConnected)}: userId={userId}");
+            }
+            onConnected.OnNext(userId);
+        }
 
         public IObservable<string> OnDisconnecting => onDisconnecting;
         private readonly Subject<string> onDisconnecting;
+        protected void FireOnDisconnecting(string reason)
+        {
+            if (Logger.IsDebug())
+            {
+                Logger.LogDebug($"{nameof(FireOnDisconnecting)}: reason={reason}");
+            }
+            onDisconnecting.OnNext(reason);
+        }
 
         public IObservable<string> OnUnexpectedDisconnected => onUnexpectedDisconnected;
         private readonly Subject<string> onUnexpectedDisconnected;
+        protected void FireOnUnexpectedDisconnected(string reason)
+        {
+            if (Logger.IsDebug())
+            {
+                Logger.LogDebug($"{nameof(FireOnUnexpectedDisconnected)}: reason={reason}");
+            }
+            IsConnected = false;
+            onUnexpectedDisconnected.OnNext(reason);
+        }
 
         public IObservable<Unit> OnConnectionApprovalRejected => onConnectionApprovalRejected;
         private readonly Subject<Unit> onConnectionApprovalRejected;
+        protected void FireOnConnectionApprovalRejected()
+        {
+            if (Logger.IsDebug())
+            {
+                Logger.LogDebug($"{nameof(FireOnConnectionApprovalRejected)}");
+            }
+            onConnectionApprovalRejected.OnNext(Unit.Default);
+        }
 
         public IObservable<string> OnUserConnected => onUserConnected;
         private readonly Subject<string> onUserConnected;
+        protected void FireOnUserConnected(string userId)
+        {
+            if (Logger.IsDebug())
+            {
+                Logger.LogDebug($"{nameof(FireOnUserConnected)}: userId={userId}");
+            }
+            onUserConnected.OnNext(userId);
+        }
 
         public IObservable<string> OnUserDisconnecting => onUserDisconnecting;
         private readonly Subject<string> onUserDisconnecting;
+        protected void FireOnUserDisconnecting(string userId)
+        {
+            if (Logger.IsDebug())
+            {
+                Logger.LogDebug($"{nameof(FireOnUserDisconnecting)}: userId={userId}");
+            }
+            onUserDisconnecting.OnNext(userId);
+        }
 
         public IObservable<(string userId, string message)> OnMessageReceived => onMessageReceived;
         private readonly Subject<(string, string)> onMessageReceived;
+        protected void FireOnMessageReceived(string userId, string message)
+        {
+            if (Logger.IsDebug())
+            {
+                Logger.LogDebug($"{nameof(FireOnMessageReceived)}: userId={userId}, message={message}");
+            }
+            onMessageReceived.OnNext((userId, message));
+        }
 
-        private SocketIO ioClient;
-        private readonly RedisMessagingConfig messagingConfig;
-        private string userIdentityLocal;
+        protected RedisMessagingConfig MessagingConfig { get; }
+        protected string UserIdentityLocal { get; private set; }
 
         private readonly CompositeDisposable disposables = new CompositeDisposable();
 
-        private static readonly ELogger Logger = LoggingManager.GetLogger(nameof(ExtrealMessagingClient));
+        private static readonly ELogger Logger = LoggingManager.GetLogger(nameof(RedisMessagingTransport));
 
         [SuppressMessage("Usage", "CC0022")]
-        public RedisMessagingTransport(RedisMessagingConfig messagingConfig)
+        protected RedisMessagingTransport(RedisMessagingConfig messagingConfig)
         {
             onConnected = new Subject<string>().AddTo(disposables);
             onDisconnecting = new Subject<string>().AddTo(disposables);
@@ -57,82 +114,33 @@ namespace Extreal.Integration.Messaging.Redis
             onConnectionApprovalRejected = new Subject<Unit>().AddTo(disposables);
             onMessageReceived = new Subject<(string, string)>().AddTo(disposables);
 
-            this.messagingConfig = messagingConfig;
-        }
-
-        private async UniTask<SocketIO> GetSocketAsync()
-        {
-            if (ioClient is not null)
-            {
-                if (ioClient.Connected)
-                {
-                    return ioClient;
-                }
-                // Not covered by testing due to defensive implementation
-                await StopSocketAsync();
-            }
-
-            ioClient = new SocketIO(messagingConfig.Url, messagingConfig.SocketIOOptions);
-
-            ioClient.OnDisconnected += DisconnectedEventHandler;
-            ioClient.On("user connected", UserConnectedEventHandler);
-            ioClient.On("user disconnecting", UserDisconnectingEventHandler);
-            ioClient.On("message", MessageReceivedEventHandler);
-
-            try
-            {
-                await ioClient.ConnectAsync().ConfigureAwait(true);
-            }
-            catch (ConnectionException)
-            {
-                throw;
-            }
-
-            return ioClient;
-        }
-
-        private async UniTask StopSocketAsync()
-        {
-            if (ioClient is null)
-            {
-                // Not covered by testing due to defensive implementation
-                return;
-            }
-
-            ioClient.OnDisconnected -= DisconnectedEventHandler;
-
-            await ioClient.EmitAsync("disconnecting");
-
-            ioClient.Dispose();
-            ioClient = null;
-            IsConnected = false;
+            MessagingConfig = messagingConfig;
         }
 
         protected override void ReleaseManagedResources()
         {
-            StopSocketAsync().Forget();
             disposables.Dispose();
+            DoReleaseManagedResources();
+        }
+
+        protected abstract void DoReleaseManagedResources();
+
+        public async UniTask SendMessageAsync(string jsonMessage, string to = default)
+        {
+            var message = JsonUtility.ToJson(new Message(UserIdentityLocal, to, jsonMessage));
+            await DoSendMessageAsync(message);
         }
 
         [SuppressMessage("Usage", "CC0021")]
-        public async UniTask SendMessageAsync(string jsonMsg, string to = default)
-        {
-            var message = JsonUtility.ToJson(new Message(userIdentityLocal, to, jsonMsg));
-            await ioClient.EmitAsync("message", message);
-        }
+        protected abstract UniTask DoSendMessageAsync(string message);
 
         public async UniTask<List<MessagingRoomInfo>> ListRoomsAsync()
         {
-            var roomList = default(RoomList);
-            await (await GetSocketAsync()).EmitAsync("list rooms", response =>
-            {
-
-                Debug.LogWarning(response.ToString());
-                roomList = response.GetValue<RoomList>();
-            });
-            await UniTask.WaitUntil(() => roomList != null);
-            return roomList?.Rooms;
+            var roomResponses = await DoListRoomsAsync();
+            return roomResponses.Select(roomResponse => new MessagingRoomInfo(roomResponse.Id, roomResponse.Name)).ToList();
         }
+
+        protected abstract UniTask<List<RoomResponse>> DoListRoomsAsync();
 
         public async UniTask ConnectAsync(MessagingConnectionConfig connectionConfig)
         {
@@ -140,26 +148,21 @@ namespace Extreal.Integration.Messaging.Redis
             {
                 Logger.LogDebug($"Connect: RoomName={connectionConfig.RoomName}, MaxCapacity={connectionConfig.MaxCapacity}");
             }
+            UserIdentityLocal = Guid.NewGuid().ToString();
 
-            var message = default(string);
-            userIdentityLocal = Guid.NewGuid().ToString();
-            await (await GetSocketAsync()).EmitAsync(
-                "join",
-                response => message = response.GetValue<string>(),
-                userIdentityLocal, connectionConfig.RoomName, connectionConfig.MaxCapacity
-            );
-
-            await UniTask.WaitUntil(() => message != null);
+            var message = await DoConnectAsync(connectionConfig);
 
             if (message == "rejected")
             {
-                onConnectionApprovalRejected.OnNext(Unit.Default);
+                FireOnConnectionApprovalRejected();
                 return;
             }
 
             IsConnected = true;
-            onConnected.OnNext(userIdentityLocal);
+            FireOnConnected(UserIdentityLocal);
         }
+
+        protected abstract UniTask<string> DoConnectAsync(MessagingConnectionConfig connectionConfig);
 
         public async UniTask DisconnectAsync()
         {
@@ -167,59 +170,20 @@ namespace Extreal.Integration.Messaging.Redis
             {
                 Logger.LogDebug(nameof(DisconnectAsync));
             }
-            onDisconnecting.OnNext("disconnect request");
-            await StopSocketAsync();
+            FireOnDisconnecting("disconnect request");
+            await DoDisconnectAsync();
         }
+
+        protected abstract UniTask DoDisconnectAsync();
 
         public UniTask DeleteRoomAsync()
             => SendMessageAsync("delete room");
-
-        private void DisconnectedEventHandler(object sender, string e) => UniTask.Void(async () =>
-        {
-            await UniTask.SwitchToMainThread();
-
-            IsConnected = false;
-            onUnexpectedDisconnected.OnNext(e);
-        });
-
-        private void UserConnectedEventHandler(SocketIOResponse response) => UniTask.Void(async () =>
-        {
-            await UniTask.SwitchToMainThread();
-
-            var userIdentityRemote = response.GetValue<string>();
-            onUserConnected.OnNext(userIdentityRemote);
-        });
-
-        private void UserDisconnectingEventHandler(SocketIOResponse response) => UniTask.Void(async () =>
-        {
-            await UniTask.SwitchToMainThread();
-
-            var disconnectingUserIdentity = response.GetValue<string>();
-            onUserDisconnecting.OnNext(disconnectingUserIdentity);
-        });
-
-        private void MessageReceivedEventHandler(SocketIOResponse response) => UniTask.Void(async () =>
-        {
-            await UniTask.SwitchToMainThread();
-
-            var dataStr = response.GetValue<string>();
-            var message = JsonUtility.FromJson<Message>(dataStr);
-
-            if (message.MessageContent == "delete room")
-            {
-                onDisconnecting.OnNext("delete room");
-                StopSocketAsync().Forget();
-                return;
-            }
-
-            onMessageReceived.OnNext((message.From, message.MessageContent));
-        });
 
         [SuppressMessage("Usage", "CC0047")]
         public class RoomList
         {
             [JsonPropertyName("rooms")]
-            public List<MessagingRoomInfo> Rooms { get; set; }
+            public List<RoomResponse> Rooms { get; set; }
         }
 
         [Serializable]
@@ -242,4 +206,3 @@ namespace Extreal.Integration.Messaging.Redis
         }
     }
 }
-#endif
