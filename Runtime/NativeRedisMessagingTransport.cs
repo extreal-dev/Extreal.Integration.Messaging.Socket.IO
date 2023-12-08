@@ -56,7 +56,7 @@ namespace Extreal.Integration.Messaging.Redis
 
             ioClient.OnDisconnected -= DisconnectedEventHandler;
 
-            await ioClient.EmitAsync("disconnecting");
+            await ioClient.EmitAsync("leave");
 
             ioClient.Dispose();
             ioClient = null;
@@ -95,7 +95,7 @@ namespace Extreal.Integration.Messaging.Redis
             => StopSocketAsync();
 
         [SuppressMessage("Usage", "CC0021")]
-        protected override async UniTask DoSendMessageAsync(string message)
+        protected override async UniTask DoSendMessageAsync(Message message)
             => await ioClient.EmitAsync("message", message);
 
         private void DisconnectedEventHandler(object sender, string e) => UniTask.Void(async () =>
@@ -124,8 +124,7 @@ namespace Extreal.Integration.Messaging.Redis
         {
             await UniTask.SwitchToMainThread();
 
-            var dataStr = response.GetValue<string>();
-            var message = JsonSerializer.Deserialize<Message>(dataStr);
+            var message = response.GetValue<Message>();
 
             if (message.MessageContent == "delete room")
             {

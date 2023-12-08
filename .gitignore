@@ -72,5 +72,6 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 # npm
-WebScripts~/dist*
-WebScripts~/node_modules*
+WebScripts~/dist
+WebScripts~/node_modules
+RedisServer~/node_modules

@@ -126,8 +126,8 @@ namespace Extreal.Integration.Messaging.Redis
 #pragma warning restore CS1998
 
 #pragma warning disable CS1998
-        protected override async UniTask DoSendMessageAsync(string message)
-            => WebGLHelper.CallAction(WithPrefix(nameof(DoSendMessageAsync)), message);
+        protected override async UniTask DoSendMessageAsync(Message message)
+            => WebGLHelper.CallAction(WithPrefix(nameof(DoSendMessageAsync)), JsonSerializer.Serialize(message));
 #pragma warning restore CS1998
 
         private static string WithPrefix(string name) => $"{nameof(WebGLRedisMessagingTransport)}#{name}";

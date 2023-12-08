@@ -74,7 +74,9 @@ class RedisMessagingTransport {
             return;
         }
 
-        this.socket.emit("disconnecting");
+        this.socket.off("disconnect", this.receiveDisconnect);
+
+        this.socket.emit("leave");
 
         this.socket.close();
         this.socket = null;
@@ -113,8 +115,9 @@ class RedisMessagingTransport {
         this.stopSocket();
     };
 
-    public sendMessage = (message: string) => {
+    public sendMessage = (messageJson: string) => {
         if (this.socket) {
+            const message = JSON.parse(messageJson);
             this.socket.emit("message", message);
         }
     };
@@ -140,20 +143,18 @@ class RedisMessagingTransport {
         this.callbacks.onUserDisconnecting(userId);
     };
 
-    private receiveMessageAsync = async (message: string) => {
+    private receiveMessageAsync = async (message: Message) => {
         if (this.isDebug) {
-            console.log(`Receive message: ${message}`,);
+            console.log(`Receive message: ${message}`);
         }
 
-        const messageJson = JSON.parse(message);
-
-        if (messageJson.messageContent === "delete room") {
+        if (message.messageContent === "delete room") {
             this.callbacks.onDisconnecting("delete room");
             this.stopSocket();
             return;
         }
 
-        this.callbacks.onMessageReceived(messageJson.from, messageJson.messageContent);
+        this.callbacks.onMessageReceived(message.from, message.messageContent);
     };
 }
 

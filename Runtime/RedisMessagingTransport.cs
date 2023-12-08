@@ -8,7 +8,6 @@ using UniRx;
 using System.Text.Json.Serialization;
 using Extreal.Integration.Messaging.Common;
 using System.Linq;
-using System.Text.Json;
 
 namespace Extreal.Integration.Messaging.Redis
 {
@@ -173,17 +172,17 @@ namespace Extreal.Integration.Messaging.Redis
 
         public async UniTask SendMessageAsync(string jsonMessage, string to = default)
         {
-            var message = JsonSerializer.Serialize(new Message
+            var message = new Message
             {
                 From = UserIdentityLocal,
                 To = to,
                 MessageContent = jsonMessage
-            });
+            };
             await DoSendMessageAsync(message);
         }
 
         [SuppressMessage("Usage", "CC0021")]
-        protected abstract UniTask DoSendMessageAsync(string message);
+        protected abstract UniTask DoSendMessageAsync(Message message);
 
         [SuppressMessage("Usage", "CC0047")]
         public class RoomList
