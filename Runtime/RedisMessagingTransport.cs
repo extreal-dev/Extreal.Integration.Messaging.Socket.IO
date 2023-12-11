@@ -96,7 +96,7 @@ namespace Extreal.Integration.Messaging.Redis
         }
 
         protected RedisMessagingConfig MessagingConfig { get; }
-        protected string UserIdentityLocal { get; private set; }
+        protected string LocalUserId { get; private set; }
 
         private readonly CompositeDisposable disposables = new CompositeDisposable();
 
@@ -139,7 +139,7 @@ namespace Extreal.Integration.Messaging.Redis
             {
                 Logger.LogDebug($"Connect: RoomName={connectionConfig.RoomName}, MaxCapacity={connectionConfig.MaxCapacity}");
             }
-            UserIdentityLocal = Guid.NewGuid().ToString();
+            LocalUserId = Guid.NewGuid().ToString();
 
             var message = await DoConnectAsync(connectionConfig);
 
@@ -150,7 +150,7 @@ namespace Extreal.Integration.Messaging.Redis
             }
 
             IsConnected = true;
-            FireOnConnected(UserIdentityLocal);
+            FireOnConnected(LocalUserId);
         }
 
         protected abstract UniTask<string> DoConnectAsync(MessagingConnectionConfig connectionConfig);
@@ -174,7 +174,7 @@ namespace Extreal.Integration.Messaging.Redis
         {
             var message = new Message
             {
-                From = UserIdentityLocal,
+                From = LocalUserId,
                 To = to,
                 MessageContent = jsonMessage
             };

@@ -79,18 +79,18 @@ const rooms = (): Map<string, Set<string>> => {
 
 io.on("connection", async (socket: Socket) => {
     let roomName = "";
-    let userIdentity = "";
+    let userId = "";
 
     socket.on(
         "join",
         async (
-            receivedUserIdentity: string,
+            receivedUserId: string,
             receivedRoomName: string,
             receivedMaxCapacity: number,
             callback: (response: string) => void,
         ) => {
             roomName = receivedRoomName;
-            userIdentity = receivedUserIdentity;
+            userId = receivedUserId;
 
             if (
                 ![...rooms().entries()]
@@ -106,18 +106,18 @@ io.on("connection", async (socket: Socket) => {
                 const maxCapacity = Number.parseInt(maxCapacityStr);
                 const connectedClientNum = rooms().get(roomName)?.size as number;
                 if (connectedClientNum >= maxCapacity) {
-                    console.log(`Reject user: ${userIdentity}`);
+                    console.log(`Reject user: ${userId}`);
                     callback("rejected");
                     return;
                 }
             }
 
             callback("approved");
-            console.log("join: id[%s], Room[%s]", userIdentity, roomName);
-            await redisClient.set(userIdentity, socket.id.toString());
+            console.log("join: id[%s], Room[%s]", userId, roomName);
+            await redisClient.set(userId, socket.id.toString());
             await socket.join(roomName); // ルームへ加入
             // ルームにいる他のクライアントにユーザが参加したことを通知
-            socket.to(roomName).emit("user connected", userIdentity);
+            socket.to(roomName).emit("user connected", userId);
 
             return;
         },
@@ -147,7 +147,7 @@ io.on("connection", async (socket: Socket) => {
     const handleDisconnect = () => {
         if (roomName) {
             console.log(`user disconnecting[${socket.id}]`);
-            socket.to(roomName).emit("user disconnecting", userIdentity);
+            socket.to(roomName).emit("user disconnecting", userId);
             socket.leave(roomName);
             roomName = "";
         }

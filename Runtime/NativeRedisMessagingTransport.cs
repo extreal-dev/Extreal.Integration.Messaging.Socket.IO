@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using System.Diagnostics.CodeAnalysis;
 using SocketIOClient;
 using Extreal.Integration.Messaging.Common;
-using System.Text.Json;
 
 namespace Extreal.Integration.Messaging.Redis
 {
@@ -83,7 +82,7 @@ namespace Extreal.Integration.Messaging.Redis
             await (await GetSocketAsync()).EmitAsync(
                 "join",
                 response => message = response.GetValue<string>(),
-                UserIdentityLocal, connectionConfig.RoomName, connectionConfig.MaxCapacity
+                LocalUserId, connectionConfig.RoomName, connectionConfig.MaxCapacity
             );
 
             await UniTask.WaitUntil(() => message != null);

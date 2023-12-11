@@ -109,7 +109,7 @@ namespace Extreal.Integration.Messaging.Redis
         {
             var jsonMessagingConnectionConfig = new JsonMessagingConnectionConfig
             {
-                UserId = UserIdentityLocal,
+                UserId = LocalUserId,
                 RoomName = connectionConfig.RoomName,
                 MaxCapacity = connectionConfig.MaxCapacity,
             };
