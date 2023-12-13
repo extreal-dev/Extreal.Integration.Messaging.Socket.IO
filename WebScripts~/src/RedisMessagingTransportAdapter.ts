@@ -36,9 +36,9 @@ class RedisMessagingTransportAdapter {
             this.getRedisMessagingTransport().releaseManagedResources();
         });
 
-        addAction(this.withPrefix("DoListRoomsAsync"), () => {
-            this.getRedisMessagingTransport().listRooms((response) =>
-                callback(this.withPrefix("ReceiveRoomList"), JSON.stringify(response)),
+        addAction(this.withPrefix("DoListGroupsAsync"), () => {
+            this.getRedisMessagingTransport().listGroups((response) =>
+                callback(this.withPrefix("ReceiveGroupList"), JSON.stringify(response)),
             );
         });
 

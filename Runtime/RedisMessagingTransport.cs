@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace Extreal.Integration.Messaging.Redis
 {
-    public abstract class RedisMessagingTransport : DisposableBase, IExtrealMessagingTransport
+    public abstract class RedisMessagingTransport : DisposableBase, IMessagingTransport
     {
         public bool IsConnected { get; private set; }
         protected void SetConnectStatus(bool isConnected)
@@ -124,20 +124,20 @@ namespace Extreal.Integration.Messaging.Redis
 
         protected abstract void DoReleaseManagedResources();
 
-        public async UniTask<List<MessagingRoomInfo>> ListRoomsAsync()
+        public async UniTask<List<Group>> ListGroupsAsync()
         {
-            var roomResponses = await DoListRoomsAsync();
-            return roomResponses?.Rooms.Select(roomResponse => new MessagingRoomInfo(roomResponse.Id, roomResponse.Name)).ToList()
-                ?? new List<MessagingRoomInfo>();
+            var groupResponses = await DoListGroupsAsync();
+            return groupResponses?.Groups.Select(groupResponse => new Group(groupResponse.Id, groupResponse.Name)).ToList()
+                ?? new List<Group>();
         }
 
-        protected abstract UniTask<RoomList> DoListRoomsAsync();
+        protected abstract UniTask<GroupList> DoListGroupsAsync();
 
         public async UniTask ConnectAsync(MessagingConnectionConfig connectionConfig)
         {
             if (Logger.IsDebug())
             {
-                Logger.LogDebug($"Connect: RoomName={connectionConfig.RoomName}, MaxCapacity={connectionConfig.MaxCapacity}");
+                Logger.LogDebug($"Connect: GroupName={connectionConfig.GroupName}, MaxCapacity={connectionConfig.MaxCapacity}");
             }
             LocalUserId = Guid.NewGuid().ToString();
 
@@ -167,8 +167,8 @@ namespace Extreal.Integration.Messaging.Redis
 
         protected abstract UniTask DoDisconnectAsync();
 
-        public UniTask DeleteRoomAsync()
-            => SendMessageAsync("delete room");
+        public UniTask DeleteGroupAsync()
+            => SendMessageAsync("delete group");
 
         public async UniTask SendMessageAsync(string jsonMessage, string to = default)
         {
@@ -185,10 +185,10 @@ namespace Extreal.Integration.Messaging.Redis
         protected abstract UniTask DoSendMessageAsync(Message message);
 
         [SuppressMessage("Usage", "CC0047")]
-        public class RoomList
+        public class GroupList
         {
-            [JsonPropertyName("rooms")]
-            public List<RoomResponse> Rooms { get; set; }
+            [JsonPropertyName("groups")]
+            public List<GroupResponse> Groups { get; set; }
         }
 
         [SuppressMessage("Usage", "CC0047")]

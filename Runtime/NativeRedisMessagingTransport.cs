@@ -65,15 +65,15 @@ namespace Extreal.Integration.Messaging.Redis
         protected override void DoReleaseManagedResources()
             => StopSocketAsync().Forget();
 
-        protected override async UniTask<RoomList> DoListRoomsAsync()
+        protected override async UniTask<GroupList> DoListGroupsAsync()
         {
-            var roomList = default(RoomList);
+            var groupList = default(GroupList);
             await (await GetSocketAsync()).EmitAsync(
-                "list rooms",
-                response => roomList = response.GetValue<RoomList>()
+                "list groups",
+                response => groupList = response.GetValue<GroupList>()
             );
-            await UniTask.WaitUntil(() => roomList != null);
-            return roomList;
+            await UniTask.WaitUntil(() => groupList != null);
+            return groupList;
         }
 
         protected override async UniTask<string> DoConnectAsync(MessagingConnectionConfig connectionConfig)
@@ -82,7 +82,7 @@ namespace Extreal.Integration.Messaging.Redis
             await (await GetSocketAsync()).EmitAsync(
                 "join",
                 response => message = response.GetValue<string>(),
-                LocalUserId, connectionConfig.RoomName, connectionConfig.MaxCapacity
+                LocalUserId, connectionConfig.GroupName, connectionConfig.MaxCapacity
             );
 
             await UniTask.WaitUntil(() => message != null);
@@ -125,9 +125,9 @@ namespace Extreal.Integration.Messaging.Redis
 
             var message = response.GetValue<Message>();
 
-            if (message.MessageContent == "delete room")
+            if (message.MessageContent == "delete group")
             {
-                FireOnDisconnecting("delete room");
+                FireOnDisconnecting("delete group");
                 StopSocketAsync().Forget();
                 return;
             }

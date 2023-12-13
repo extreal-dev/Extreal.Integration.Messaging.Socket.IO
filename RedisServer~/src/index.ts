@@ -38,11 +38,11 @@ type Message = {
     to: string;
 };
 
-type ListHostsResponse = {
-    rooms: Room[];
+type ListGroupsResponse = {
+    groups: Group[];
 };
 
-type Room = {
+type Group = {
     id: string;
     name: string;
 };
@@ -78,33 +78,33 @@ const rooms = (): Map<string, Set<string>> => {
 };
 
 io.on("connection", async (socket: Socket) => {
-    let roomName = "";
+    let groupName = "";
     let userId = "";
 
     socket.on(
         "join",
         async (
             receivedUserId: string,
-            receivedRoomName: string,
+            receivedGroupName: string,
             receivedMaxCapacity: number,
             callback: (response: string) => void,
         ) => {
-            roomName = receivedRoomName;
+            groupName = receivedGroupName;
             userId = receivedUserId;
 
             if (
                 ![...rooms().entries()]
                     .filter((entry) => !entry[1].has(entry[0]))
-                    .find((entry) => entry[0] === roomName) &&
+                    .find((entry) => entry[0] === groupName) &&
                 receivedMaxCapacity !== 0
             ) {
-                await redisClient.set(`MaxCapacity#${roomName}`, receivedMaxCapacity);
+                await redisClient.set(`MaxCapacity#${groupName}`, receivedMaxCapacity);
             }
 
-            const maxCapacityStr = await redisClient.get(`MaxCapacity#${roomName}`);
+            const maxCapacityStr = await redisClient.get(`MaxCapacity#${groupName}`);
             if (maxCapacityStr) {
                 const maxCapacity = Number.parseInt(maxCapacityStr);
-                const connectedClientNum = rooms().get(roomName)?.size as number;
+                const connectedClientNum = rooms().get(groupName)?.size as number;
                 if (connectedClientNum >= maxCapacity) {
                     console.log(`Reject user: ${userId}`);
                     callback("rejected");
@@ -113,11 +113,11 @@ io.on("connection", async (socket: Socket) => {
             }
 
             callback("approved");
-            console.log("join: id[%s], Room[%s]", userId, roomName);
+            console.log("join: id[%s], group[%s]", userId, groupName);
             await redisClient.set(userId, socket.id.toString());
-            await socket.join(roomName); // ルームへ加入
+            await socket.join(groupName); // ルームへ加入
             // ルームにいる他のクライアントにユーザが参加したことを通知
-            socket.to(roomName).emit("user connected", userId);
+            socket.to(groupName).emit("user connected", userId);
 
             return;
         },
@@ -131,25 +131,25 @@ io.on("connection", async (socket: Socket) => {
             }
             return;
         }
-        if (roomName) {
-            socket.to(roomName).emit("message", message);
+        if (groupName) {
+            socket.to(groupName).emit("message", message);
         }
     });
 
-    socket.on("list rooms", (callback: (response: ListHostsResponse) => void) => {
+    socket.on("list groups", (callback: (response: ListGroupsResponse) => void) => {
         callback({
-            rooms: [...rooms().entries()]
+            groups: [...rooms().entries()]
                 .filter((entry) => !entry[1].has(entry[0]))
                 .map((entry) => ({ name: entry[0], id: [...entry[1]][0] })),
         });
     });
 
     const handleDisconnect = () => {
-        if (roomName) {
+        if (groupName) {
             console.log(`user disconnecting[${socket.id}]`);
-            socket.to(roomName).emit("user disconnecting", userId);
-            socket.leave(roomName);
-            roomName = "";
+            socket.to(groupName).emit("user disconnecting", userId);
+            socket.leave(groupName);
+            groupName = "";
         }
     };
 

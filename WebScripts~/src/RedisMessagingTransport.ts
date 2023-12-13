@@ -8,12 +8,12 @@ type RedisMessagingConfig = {
 
 type MessagingConnectionConfig = {
     userId: string;
-    roomName: string;
+    groupName: string;
     macCapacity: number;
 };
 
-type RoomList = {
-    rooms: Array<{ id: string; name: string }>;
+type GroupList = {
+    groups: Array<{ id: string; name: string }>;
 };
 
 type Message = {
@@ -87,8 +87,8 @@ class RedisMessagingTransport {
         this.stopSocket();
     };
 
-    public listRooms = (handle: (response: RoomList) => void) => {
-        this.getSocket().emit("list rooms", (response: RoomList) => {
+    public listGroups = (handle: (response: GroupList) => void) => {
+        this.getSocket().emit("list groups", (response: GroupList) => {
             if (this.isDebug) {
                 console.log(response);
             }
@@ -100,7 +100,7 @@ class RedisMessagingTransport {
         this.getSocket().emit(
             "join",
             connectionConfig.userId,
-            connectionConfig.roomName,
+            connectionConfig.groupName,
             connectionConfig.macCapacity,
             (response: string) => {
                 if (this.isDebug) {
@@ -148,8 +148,8 @@ class RedisMessagingTransport {
             console.log(`Receive message: ${message}`);
         }
 
-        if (message.messageContent === "delete room") {
-            this.callbacks.onDisconnecting("delete room");
+        if (message.messageContent === "delete group") {
+            this.callbacks.onDisconnecting("delete group");
             this.stopSocket();
             return;
         }

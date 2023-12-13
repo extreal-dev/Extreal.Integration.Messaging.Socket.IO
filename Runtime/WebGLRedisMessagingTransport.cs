@@ -13,14 +13,14 @@ namespace Extreal.Integration.Messaging.Redis
     public class WebGLRedisMessagingTransport : RedisMessagingTransport
     {
         private static WebGLRedisMessagingTransport instance;
-        private RoomList roomList;
+        private GroupList groupList;
         private string connectMessage;
 
         public WebGLRedisMessagingTransport(WebGLRedisMessagingConfig messagingConfig) : base(messagingConfig)
         {
             instance = this;
             WebGLHelper.CallAction(WithPrefix(nameof(WebGLRedisMessagingTransport)), JsonRedisMessagingConfig.ToJson(messagingConfig));
-            WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveRoomList)), ReceiveRoomList);
+            WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveGroupList)), ReceiveGroupList);
             WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveConnectMessage)), ReceiveConnectMessage);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleConnectStatus)), HandleConnectStatus);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnConnected)), HandleOnConnected);
@@ -33,8 +33,8 @@ namespace Extreal.Integration.Messaging.Redis
         }
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void ReceiveRoomList(string jsonResponse, string unused)
-            => instance.roomList = JsonSerializer.Deserialize<RoomList>(jsonResponse);
+        private static void ReceiveGroupList(string jsonResponse, string unused)
+            => instance.groupList = JsonSerializer.Deserialize<GroupList>(jsonResponse);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void ReceiveConnectMessage(string connectMessage, string unused)
@@ -96,12 +96,12 @@ namespace Extreal.Integration.Messaging.Redis
         protected override void DoReleaseManagedResources()
             => WebGLHelper.CallAction(WithPrefix(nameof(DoReleaseManagedResources)));
 
-        protected override async UniTask<RoomList> DoListRoomsAsync()
+        protected override async UniTask<GroupList> DoListGroupsAsync()
         {
-            WebGLHelper.CallAction(WithPrefix(nameof(DoListRoomsAsync)));
-            await UniTask.WaitUntil(() => roomList != null);
-            var result = roomList;
-            roomList = null;
+            WebGLHelper.CallAction(WithPrefix(nameof(DoListGroupsAsync)));
+            await UniTask.WaitUntil(() => groupList != null);
+            var result = groupList;
+            groupList = null;
             return result;
         }
 
@@ -110,7 +110,7 @@ namespace Extreal.Integration.Messaging.Redis
             var jsonMessagingConnectionConfig = new JsonMessagingConnectionConfig
             {
                 UserId = LocalUserId,
-                RoomName = connectionConfig.RoomName,
+                GroupName = connectionConfig.GroupName,
                 MaxCapacity = connectionConfig.MaxCapacity,
             };
             WebGLHelper.CallAction(WithPrefix(nameof(DoConnectAsync)), jsonMessagingConnectionConfig.ToJason());
@@ -177,8 +177,8 @@ namespace Extreal.Integration.Messaging.Redis
         [JsonPropertyName("userId")]
         public string UserId { get; set; }
 
-        [JsonPropertyName("roomName")]
-        public string RoomName { get; set; }
+        [JsonPropertyName("groupName")]
+        public string GroupName { get; set; }
 
         [JsonPropertyName("macCapacity")]
         public int MaxCapacity { get; set; }
