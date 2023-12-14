@@ -2,14 +2,14 @@ import { io, Socket, SocketOptions, ManagerOptions } from "socket.io-client";
 
 type RedisMessagingConfig = {
     url: string;
-    socketOptions: SocketOptions & ManagerOptions;
+    socketIOOptions: SocketOptions & ManagerOptions;
     isDebug: boolean;
 };
 
 type MessagingConnectionConfig = {
     userId: string;
     groupName: string;
-    macCapacity: number;
+    maxCapacity: number;
 };
 
 type GroupList = {
@@ -24,10 +24,8 @@ type Message = {
 
 type RedisMessagingTransportCallbacks = {
     setConnectStatus: (isConnected: string) => void;
-    onConnected: (userId: string) => void;
     onDisconnecting: (reason: string) => void;
     onUnexpectedDisconnected: (reason: string) => void;
-    onConnectionApprovalRejected: () => void;
     onUserConnected: (userId: string) => void;
     onUserDisconnecting: (userId: string) => void;
     onMessageReceived: (userId: string, message: string) => void;
@@ -56,7 +54,7 @@ class RedisMessagingTransport {
             this.stopSocket();
         }
 
-        const socket = io(this.redisMessagingConfig.url, this.redisMessagingConfig.socketOptions);
+        const socket = io(this.redisMessagingConfig.url, this.redisMessagingConfig.socketIOOptions);
         this.socket = socket;
 
         this.socket.on("disconnect", this.receiveDisconnect);
@@ -101,7 +99,7 @@ class RedisMessagingTransport {
             "join",
             connectionConfig.userId,
             connectionConfig.groupName,
-            connectionConfig.macCapacity,
+            connectionConfig.maxCapacity,
             (response: string) => {
                 if (this.isDebug) {
                     console.log(response);
@@ -115,16 +113,16 @@ class RedisMessagingTransport {
         this.stopSocket();
     };
 
-    public sendMessage = (messageJson: string) => {
+    public sendMessage = (message: string) => {
         if (this.socket) {
-            const message = JSON.parse(messageJson);
-            this.socket.emit("message", message);
+            const messageJson = JSON.parse(message);
+            this.socket.emit("message", messageJson);
         }
     };
 
     private receiveDisconnect = (reason: string) => {
         if (this.isDebug) {
-            console.log(reason);
+            console.log(`Receive disconnect: reason=${reason}`);
         }
         this.callbacks.onUnexpectedDisconnected(reason);
     };
@@ -133,12 +131,12 @@ class RedisMessagingTransport {
         if (this.isDebug) {
             console.log(userId);
         }
-        this.callbacks.onUserConnected(userId);
+        this.callbacks.onUserConnected(`Receive user connected: ${userId}`);
     };
 
     private receiveUserDisconnecting = (userId: string) => {
         if (this.isDebug) {
-            console.log(`Receive user disconnected: ${userId}`);
+            console.log(`Receive user disconnecting: ${userId}`);
         }
         this.callbacks.onUserDisconnecting(userId);
     };

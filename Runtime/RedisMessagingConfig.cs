@@ -7,10 +7,10 @@ namespace Extreal.Integration.Messaging.Redis
         public string Url { get; }
         public SocketIOOptions SocketIOOptions { get; }
 
-        public RedisMessagingConfig(string url, SocketIOOptions options)
+        public RedisMessagingConfig(string url, SocketIOOptions socketIOOptions)
         {
             Url = url;
-            SocketIOOptions = options;
+            SocketIOOptions = socketIOOptions;
         }
     }
 }

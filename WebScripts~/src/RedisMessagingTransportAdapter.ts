@@ -3,15 +3,9 @@ import { addAction, callback } from "@extreal-dev/extreal.integration.web.common
 
 type RedisMessagingTransportProvider = () => RedisMessagingTransport;
 
-/**
- * Class that defines the PeerClient integration between C# and JavaScript.
- */
 class RedisMessagingTransportAdapter {
     private redisMessagingTransport: RedisMessagingTransport | undefined;
 
-    /**
-     * Adapts the PeerClient integration between C# and JavaScript.
-     */
     public adapt = () => {
         addAction(this.withPrefix("WebGLRedisMessagingTransport"), (jsonRedisMessagingConfig) => {
             const redisMessagingConfig = JSON.parse(jsonRedisMessagingConfig);
@@ -20,11 +14,9 @@ class RedisMessagingTransportAdapter {
             }
             this.redisMessagingTransport = new RedisMessagingTransport(redisMessagingConfig, {
                 setConnectStatus: (isConnected) => callback(this.withPrefix("HandleConnectStatus"), isConnected),
-                onConnected: (userId) => callback(this.withPrefix("HandleOnConnected"), userId),
                 onDisconnecting: (reason) => callback(this.withPrefix("HandleOnDisconnecting"), reason),
                 onUnexpectedDisconnected: (reason) =>
                     callback(this.withPrefix("HandleOnUnexpectedDisconnected"), reason),
-                onConnectionApprovalRejected: () => callback(this.withPrefix("HandleOnConnectionApprovalRejected")),
                 onUserConnected: (userId) => callback(this.withPrefix("HandleOnUserConnected"), userId),
                 onUserDisconnecting: (userId) => callback(this.withPrefix("HandleOnUserDisconnecting"), userId),
                 onMessageReceived: (userId, message) =>

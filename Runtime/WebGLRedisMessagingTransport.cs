@@ -1,4 +1,4 @@
-#if UNITY_WEBGL //&& !UNITY_EDITOR
+#if UNITY_WEBGL
 using Cysharp.Threading.Tasks;
 using System.Diagnostics.CodeAnalysis;
 using Extreal.Integration.Messaging.Common;
@@ -7,6 +7,7 @@ using AOT;
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 
 namespace Extreal.Integration.Messaging.Redis
 {
@@ -16,17 +17,17 @@ namespace Extreal.Integration.Messaging.Redis
         private GroupList groupList;
         private string connectMessage;
 
-        public WebGLRedisMessagingTransport(WebGLRedisMessagingConfig messagingConfig) : base(messagingConfig)
+        private CancellationTokenSource cancellation = new CancellationTokenSource();
+
+        public WebGLRedisMessagingTransport(WebGLRedisMessagingConfig messagingConfig) : base()
         {
             instance = this;
             WebGLHelper.CallAction(WithPrefix(nameof(WebGLRedisMessagingTransport)), JsonRedisMessagingConfig.ToJson(messagingConfig));
             WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveGroupList)), ReceiveGroupList);
             WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveConnectMessage)), ReceiveConnectMessage);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleConnectStatus)), HandleConnectStatus);
-            WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnConnected)), HandleOnConnected);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnDisconnecting)), HandleOnDisconnecting);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnUnexpectedDisconnected)), HandleOnUnexpectedDisconnected);
-            WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnConnectionApprovalRejected)), HandleOnConnectionApprovalRejected);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnUserConnected)), HandleOnUserConnected);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnUserDisconnecting)), HandleOnUserDisconnecting);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnMessageReceived)), HandleOnMessageReceived);
@@ -45,76 +46,50 @@ namespace Extreal.Integration.Messaging.Redis
             => instance.SetConnectStatus(bool.Parse(isConnected));
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void HandleOnConnected(string userId, string unused) => UniTask.Void(async () =>
-        {
-            await UniTask.SwitchToMainThread();
-            instance.FireOnConnected(userId);
-        });
+        private static void HandleOnDisconnecting(string reason, string unused)
+            => instance.FireOnDisconnecting(reason);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void HandleOnDisconnecting(string reason, string unused) => UniTask.Void(async () =>
-        {
-            await UniTask.SwitchToMainThread();
-            instance.FireOnDisconnecting(reason);
-        });
+        private static void HandleOnUnexpectedDisconnected(string reason, string unused)
+            => instance.FireOnUnexpectedDisconnected(reason);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void HandleOnUnexpectedDisconnected(string reason, string unused) => UniTask.Void(async () =>
-        {
-            await UniTask.SwitchToMainThread();
-            instance.FireOnUnexpectedDisconnected(reason);
-        });
+        private static void HandleOnUserConnected(string userId, string unused)
+            => instance.FireOnUserConnected(userId);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void HandleOnConnectionApprovalRejected(string unused1, string unused2) => UniTask.Void(async () =>
-        {
-            await UniTask.SwitchToMainThread();
-            instance.FireOnConnectionApprovalRejected();
-        });
+        private static void HandleOnUserDisconnecting(string userId, string unused)
+            => instance.FireOnUserDisconnecting(userId);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void HandleOnUserConnected(string userId, string unused) => UniTask.Void(async () =>
-        {
-            await UniTask.SwitchToMainThread();
-            instance.FireOnUserConnected(userId);
-        });
-
-        [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void HandleOnUserDisconnecting(string userId, string unused) => UniTask.Void(async () =>
-        {
-            await UniTask.SwitchToMainThread();
-            instance.FireOnUserDisconnecting(userId);
-        });
-
-        [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void HandleOnMessageReceived(string userId, string message) => UniTask.Void(async () =>
-        {
-            await UniTask.SwitchToMainThread();
-            instance.FireOnMessageReceived(userId, message);
-        });
+        private static void HandleOnMessageReceived(string userId, string message)
+            => instance.FireOnMessageReceived(userId, message);
 
         protected override void DoReleaseManagedResources()
-            => WebGLHelper.CallAction(WithPrefix(nameof(DoReleaseManagedResources)));
+        {
+            cancellation.Dispose();
+            WebGLHelper.CallAction(WithPrefix(nameof(DoReleaseManagedResources)));
+        }
 
         protected override async UniTask<GroupList> DoListGroupsAsync()
         {
             WebGLHelper.CallAction(WithPrefix(nameof(DoListGroupsAsync)));
-            await UniTask.WaitUntil(() => groupList != null);
+            await UniTask.WaitUntil(() => groupList != null, cancellationToken: cancellation.Token);
             var result = groupList;
             groupList = null;
             return result;
         }
 
-        protected override async UniTask<string> DoConnectAsync(MessagingConnectionConfig connectionConfig)
+        protected override async UniTask<string> DoConnectAsync(MessagingConnectionConfig connectionConfig, string localUserId)
         {
             var jsonMessagingConnectionConfig = new JsonMessagingConnectionConfig
             {
-                UserId = LocalUserId,
+                UserId = localUserId,
                 GroupName = connectionConfig.GroupName,
                 MaxCapacity = connectionConfig.MaxCapacity,
             };
             WebGLHelper.CallAction(WithPrefix(nameof(DoConnectAsync)), jsonMessagingConnectionConfig.ToJason());
-            await UniTask.WaitUntil(() => connectMessage != null);
+            await UniTask.WaitUntil(() => connectMessage != null, cancellationToken: cancellation.Token);
             var result = connectMessage;
             connectMessage = null;
             return result;
@@ -122,7 +97,13 @@ namespace Extreal.Integration.Messaging.Redis
 
 #pragma warning disable CS1998
         protected override async UniTask DoDisconnectAsync()
-            => WebGLHelper.CallAction(WithPrefix(nameof(DoDisconnectAsync)));
+        {
+            cancellation.Cancel();
+            cancellation.Dispose();
+            cancellation = new CancellationTokenSource();
+
+            WebGLHelper.CallAction(WithPrefix(nameof(DoDisconnectAsync)));
+        }
 #pragma warning restore CS1998
 
 #pragma warning disable CS1998
@@ -180,7 +161,7 @@ namespace Extreal.Integration.Messaging.Redis
         [JsonPropertyName("groupName")]
         public string GroupName { get; set; }
 
-        [JsonPropertyName("macCapacity")]
+        [JsonPropertyName("maxCapacity")]
         public int MaxCapacity { get; set; }
 
         public string ToJason()

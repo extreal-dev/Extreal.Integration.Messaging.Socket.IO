@@ -8,9 +8,9 @@ services:
         expose:
             - '${REDIS_PORT:-6379}'
         tty: true
-    sigapp:
+    redispubsub:
         build: .
-        container_name: sigapp
+        container_name: redispubsub
         init: true
         restart: always
         tty: true

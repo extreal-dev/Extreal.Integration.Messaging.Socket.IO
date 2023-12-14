@@ -3,16 +3,19 @@ using Cysharp.Threading.Tasks;
 using System.Diagnostics.CodeAnalysis;
 using SocketIOClient;
 using Extreal.Integration.Messaging.Common;
+using System.Threading;
 
 namespace Extreal.Integration.Messaging.Redis
 {
     public class NativeRedisMessagingTransport : RedisMessagingTransport
     {
-        private SocketIO ioClient;
+        private readonly RedisMessagingConfig redisMessagingConfig;
 
-        public NativeRedisMessagingTransport(RedisMessagingConfig messagingConfig) : base(messagingConfig)
-        {
-        }
+        private SocketIO ioClient;
+        private CancellationTokenSource cancellation;
+
+        public NativeRedisMessagingTransport(RedisMessagingConfig messagingConfig) : base()
+            => redisMessagingConfig = messagingConfig;
 
         private async UniTask<SocketIO> GetSocketAsync()
         {
@@ -26,7 +29,9 @@ namespace Extreal.Integration.Messaging.Redis
                 await StopSocketAsync();
             }
 
-            ioClient = new SocketIO(MessagingConfig.Url, MessagingConfig.SocketIOOptions);
+            cancellation = new CancellationTokenSource();
+
+            ioClient = new SocketIO(redisMessagingConfig.Url, redisMessagingConfig.SocketIOOptions);
 
             ioClient.OnDisconnected += DisconnectedEventHandler;
             ioClient.On("user connected", UserConnectedEventHandler);
@@ -53,6 +58,9 @@ namespace Extreal.Integration.Messaging.Redis
                 return;
             }
 
+            cancellation.Cancel();
+            cancellation.Dispose();
+
             ioClient.OnDisconnected -= DisconnectedEventHandler;
 
             await ioClient.EmitAsync("leave");
@@ -72,21 +80,19 @@ namespace Extreal.Integration.Messaging.Redis
                 "list groups",
                 response => groupList = response.GetValue<GroupList>()
             );
-            await UniTask.WaitUntil(() => groupList != null);
+            await UniTask.WaitUntil(() => groupList != null, cancellationToken: cancellation.Token);
             return groupList;
         }
 
-        protected override async UniTask<string> DoConnectAsync(MessagingConnectionConfig connectionConfig)
+        protected override async UniTask<string> DoConnectAsync(MessagingConnectionConfig connectionConfig, string localUserId)
         {
             var message = default(string);
             await (await GetSocketAsync()).EmitAsync(
                 "join",
                 response => message = response.GetValue<string>(),
-                LocalUserId, connectionConfig.GroupName, connectionConfig.MaxCapacity
+                localUserId, connectionConfig.GroupName, connectionConfig.MaxCapacity
             );
-
-            await UniTask.WaitUntil(() => message != null);
-
+            await UniTask.WaitUntil(() => message != null, cancellationToken: cancellation.Token);
             return message;
         }
 
@@ -97,32 +103,23 @@ namespace Extreal.Integration.Messaging.Redis
         protected override async UniTask DoSendMessageAsync(Message message)
             => await ioClient.EmitAsync("message", message);
 
-        private void DisconnectedEventHandler(object sender, string e) => UniTask.Void(async () =>
-        {
-            await UniTask.SwitchToMainThread();
-            FireOnUnexpectedDisconnected(e);
-        });
+        private void DisconnectedEventHandler(object sender, string reason)
+            => FireOnUnexpectedDisconnected(reason);
 
-        private void UserConnectedEventHandler(SocketIOResponse response) => UniTask.Void(async () =>
+        private void UserConnectedEventHandler(SocketIOResponse response)
         {
-            await UniTask.SwitchToMainThread();
-
             var connectedUserId = response.GetValue<string>();
             FireOnUserConnected(connectedUserId);
-        });
+        }
 
-        private void UserDisconnectingEventHandler(SocketIOResponse response) => UniTask.Void(async () =>
+        private void UserDisconnectingEventHandler(SocketIOResponse response)
         {
-            await UniTask.SwitchToMainThread();
-
             var disconnectingUserId = response.GetValue<string>();
             FireOnUserDisconnecting(disconnectingUserId);
-        });
+        }
 
-        private void MessageReceivedEventHandler(SocketIOResponse response) => UniTask.Void(async () =>
+        private void MessageReceivedEventHandler(SocketIOResponse response)
         {
-            await UniTask.SwitchToMainThread();
-
             var message = response.GetValue<Message>();
 
             if (message.MessageContent == "delete group")
@@ -133,7 +130,7 @@ namespace Extreal.Integration.Messaging.Redis
             }
 
             FireOnMessageReceived(message.From, message.MessageContent);
-        });
+        }
     }
 }
 #endif

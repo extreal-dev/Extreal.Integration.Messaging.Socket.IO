@@ -7,12 +7,12 @@ import { Server, Socket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { createClient } from "redis";
 import * as promClient from "prom-client";
-import { Interface } from "readline";
 
 const appPort = Number(process.env.APP_PORT) || 3030;
 const apiPort = Number(process.env.API_PORT) || 3031;
 const redisHost = process.env.REDIS_HOST || "localhost";
 const redisPort = Number(process.env.REDIS_PORT) || 7379;
+const isDebug = process.env.LOGGING === "on";
 
 // const promClient = require('prom-client');
 const register = new promClient.Registry();
@@ -35,6 +35,7 @@ app.get("/metrics", async (req, res) => {
 });
 
 type Message = {
+    from: string;
     to: string;
 };
 
@@ -55,8 +56,6 @@ const io = new Server(httpServer, {
         origin: "*",
     },
 });
-// ioMiddleware = require('socketio-wildcard')();
-// io.use(ioMiddleware);
 
 const redisUrl = `redis://${redisHost}:${redisPort}`;
 const pubClient = createClient({ url: redisUrl }).on("error", (err) => {
@@ -64,11 +63,15 @@ const pubClient = createClient({ url: redisUrl }).on("error", (err) => {
     process.exit(1);
 });
 app.listen(apiPort, () => {
-    console.log(`Start on port ${apiPort}`);
+    if (isDebug) {
+        console.log(`Start on port ${apiPort}`);
+    }
 });
 const subClient = pubClient.duplicate();
 subClient.on("error", (err) => {
-    console.log("Redis subClient Error", err);
+    if (isDebug) {
+        console.log("Redis subClient Error", err);
+    }
 });
 io.adapter(createAdapter(pubClient, subClient)); // redis-adapter
 
@@ -106,17 +109,20 @@ io.on("connection", async (socket: Socket) => {
                 const maxCapacity = Number.parseInt(maxCapacityStr);
                 const connectedClientNum = rooms().get(groupName)?.size as number;
                 if (connectedClientNum >= maxCapacity) {
-                    console.log(`Reject user: ${userId}`);
+                    if (isDebug) {
+                        console.log(`Reject user: ${userId}`);
+                    }
                     callback("rejected");
                     return;
                 }
             }
 
             callback("approved");
-            console.log("join: id[%s], group[%s]", userId, groupName);
+            if (isDebug) {
+                console.log(`join: userId=${userId}, groupName=${groupName}`);
+            }
             await redisClient.set(userId, socket.id.toString());
-            await socket.join(groupName); // ルームへ加入
-            // ルームにいる他のクライアントにユーザが参加したことを通知
+            await socket.join(groupName);
             socket.to(groupName).emit("user connected", userId);
 
             return;
@@ -124,6 +130,7 @@ io.on("connection", async (socket: Socket) => {
     );
 
     socket.on("message", async (message: Message) => {
+        message.from = userId;
         if (message.to) {
             const socketId = await redisClient.get(message.to);
             if (socketId) {
@@ -146,7 +153,9 @@ io.on("connection", async (socket: Socket) => {
 
     const handleDisconnect = () => {
         if (groupName) {
-            console.log(`user disconnecting[${socket.id}]`);
+            if (isDebug) {
+                console.log(`user disconnecting[${socket.id}]`);
+            }
             socket.to(groupName).emit("user disconnecting", userId);
             socket.leave(groupName);
             groupName = "";
@@ -155,20 +164,22 @@ io.on("connection", async (socket: Socket) => {
 
     socket.on("leave", handleDisconnect);
 
-    // 切断
     socket.on("disconnect", () => {
-        console.log("disconnect");
+        if (isDebug) {
+            console.log("disconnect");
+        }
         handleDisconnect();
     });
 
-    // 接続開始時の処理
     const redisClient = createClient({ url: redisUrl }).on("error", (err) => {
         console.error("Redis Client Error:%o", err);
         process.exit(1);
     });
 
     await redisClient.connect();
-    console.log(`worker: connected id: ${socket.id}`);
+    if (isDebug) {
+        console.log(`worker: connected id: ${socket.id}`);
+    }
 });
 
 Promise.all([pubClient.connect(), subClient.connect()])
@@ -180,6 +191,8 @@ Promise.all([pubClient.connect(), subClient.connect()])
         console.error("Socket.io Listen Error: %o", err);
     })
     .finally(() => {
-        console.log(`Socket.io Listen: ${appPort}`);
-        console.log("=================================Restarted======================================");
+        if (isDebug) {
+            console.log(`Socket.io Listen: ${appPort}`);
+            console.log("=================================Restarted======================================");
+        }
     });
