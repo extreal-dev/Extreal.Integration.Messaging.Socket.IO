@@ -1,12 +1,21 @@
+using System;
+
 namespace Extreal.Integration.Messaging.Redis
 {
     public class RedisMessagingTransportProvider
     {
         public static RedisMessagingTransport Provide(RedisMessagingConfig messagingConfig)
+        {
+            if (messagingConfig == null)
+            {
+                throw new ArgumentNullException(nameof(messagingConfig));
+            }
+
 #if !UNITY_WEBGL || UNITY_EDITOR
-            => new NativeRedisMessagingTransport(messagingConfig);
+            return new NativeRedisMessagingTransport(messagingConfig);
 #else
-            => new WebGLRedisMessagingTransport(new WebGLRedisMessagingConfig(messagingConfig));
+            return new WebGLRedisMessagingTransport(new WebGLRedisMessagingConfig(messagingConfig));
 #endif
+        }
     }
 }
