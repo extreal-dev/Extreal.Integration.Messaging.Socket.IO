@@ -6,7 +6,6 @@ using Extreal.Core.Common.System;
 using Extreal.Core.Logging;
 using Extreal.Core.StageNavigation;
 using Extreal.Integration.AssetWorkflow.Addressables;
-using Extreal.Integration.P2P.WebRTC;
 using Extreal.Integration.Messaging.Redis.MVS.App.Config;
 using UniRx;
 using UnityEngine.ResourceManagement.ResourceProviders;
@@ -20,7 +19,6 @@ namespace Extreal.Integration.Messaging.Redis.MVS.App.AssetWorkflow
         public IObservable<int> OnConnectRetrying => assetProvider.OnConnectRetrying;
         public IObservable<bool> OnConnectRetried => assetProvider.OnConnectRetried;
 
-        public PeerConfig PeerConfig { get; private set; }
         public HostConfig NgoHostConfig { get; private set; }
         public ClientConfig NgoClientConfig { get; private set; }
 
