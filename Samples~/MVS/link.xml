@@ -6,7 +6,7 @@
     <type fullname="System.Text.Json.Serialization" preserve="all" />
     <type fullname="System.Text.Json.JsonSerializer" preserve="all" />
   </assembly>
-  <assembly fullname="Extreal.Core.StageNavigation" preserve="all" />
+  <assembly fullname="Extreal.Core.StageNavigation">
     <type fullname="Extreal.Core.StageNavigation.StageNavigator" preserve="all" />
   </assembly>
   <assembly fullname="Extreal.Integration.Web.Common" preserve="all" />
