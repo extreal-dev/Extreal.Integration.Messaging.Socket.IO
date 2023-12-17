@@ -47,6 +47,13 @@ namespace Extreal.Integration.Messaging.Redis.MVS.Controls.TextChatControl
                 .Subscribe(_ => appState.Notify("messagingClient disconnected unexpectedly."))
                 .AddTo(disposables);
 
+            messagingClient.OnConnectionApprovalRejected
+                .Subscribe(_ =>
+                {
+                    appState.Notify("Space is full.");
+                })
+                .AddTo(disposables);
+
             messagingClient.OnConnected
                 .Subscribe(_ => appState.NotifyInfo("Connected."))
                 .AddTo(disposables);

@@ -25,28 +25,7 @@ namespace Extreal.Integration.Messaging.Redis.MVS.Controls.ClientControl
             AppState appState,
             CompositeDisposable sceneDisposables)
         {
-            InitializeMultiplayClient(stageNavigator, appState, sceneDisposables);
         }
 
-
-
-        private void InitializeMultiplayClient(
-            StageNavigator<StageName, SceneName> stageNavigator,
-            AppState appState,
-            CompositeDisposable sceneDisposables)
-        {
-            messagingClient.OnConnectionApprovalRejected
-                .Subscribe(_ =>
-                {
-                    appState.Notify("Space is full.");
-                    stageNavigator.ReplaceAsync(StageName.GroupSelectionStage).Forget();
-                })
-                .AddTo(sceneDisposables);
-
-            messagingClient.OnUnexpectedDisconnected
-                .Subscribe(_ =>
-                    appState.Notify("Multiplayer disconnected unexpectedly."))
-                .AddTo(sceneDisposables);
-        }
     }
 }
