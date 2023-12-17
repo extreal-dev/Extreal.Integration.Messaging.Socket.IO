@@ -1,4 +1,4 @@
-﻿namespace Extreal.Integration.Multiplay.Common.MVS.Controls.ClientControl
+﻿namespace Extreal.Integration.Messaging.Redis.MVS.Controls.ClientControl
 {
     public class Group
     {

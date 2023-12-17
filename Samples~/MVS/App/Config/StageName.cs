@@ -1,4 +1,4 @@
-﻿namespace Extreal.Integration.Multiplay.Common.MVS.App.Config
+﻿namespace Extreal.Integration.Messaging.Redis.MVS.App.Config
 {
     public enum StageName
     {

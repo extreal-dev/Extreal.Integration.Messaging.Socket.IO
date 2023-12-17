@@ -1,9 +1,9 @@
 ﻿using Cysharp.Threading.Tasks;
 using Extreal.Core.StageNavigation;
-using Extreal.Integration.Multiplay.Common.MVS.App.Config;
+using Extreal.Integration.Messaging.Redis.MVS.App.Config;
 using VContainer.Unity;
 
-namespace Extreal.Integration.Multiplay.Common.MVS.App
+namespace Extreal.Integration.Messaging.Redis.MVS.App
 {
     public class AppPresenter : IStartable
     {

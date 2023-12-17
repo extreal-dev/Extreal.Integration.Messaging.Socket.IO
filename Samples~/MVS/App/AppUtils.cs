@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using Extreal.Integration.Multiplay.Common.MVS.App.Config;
+using Extreal.Integration.Messaging.Redis.MVS.App.Config;
 
-namespace Extreal.Integration.Multiplay.Common.MVS.App
+namespace Extreal.Integration.Messaging.Redis.MVS.App
 {
     public static class AppUtils
     {

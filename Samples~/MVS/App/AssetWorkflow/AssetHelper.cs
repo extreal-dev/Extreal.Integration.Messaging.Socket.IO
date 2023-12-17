@@ -7,11 +7,11 @@ using Extreal.Core.Logging;
 using Extreal.Core.StageNavigation;
 using Extreal.Integration.AssetWorkflow.Addressables;
 using Extreal.Integration.P2P.WebRTC;
-using Extreal.Integration.Multiplay.Common.MVS.App.Config;
+using Extreal.Integration.Messaging.Redis.MVS.App.Config;
 using UniRx;
 using UnityEngine.ResourceManagement.ResourceProviders;
 
-namespace Extreal.Integration.Multiplay.Common.MVS.App.AssetWorkflow
+namespace Extreal.Integration.Messaging.Redis.MVS.App.AssetWorkflow
 {
     public class AssetHelper : DisposableBase
     {

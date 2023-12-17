@@ -123,53 +123,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &1982724500
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1982724502}
-  - component: {fileID: 1982724503}
-  m_Layer: 0
-  m_Name: MultiplayClient
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1982724502
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1982724500}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1982724503
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1982724500}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c8bb12cca6abb4142b3b508bfd7a35a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerObject: {fileID: 7407036263737879821, guid: d2eae51810896804e9ece241a580a09a,
-    type: 3}
-  networkObjects: []
 --- !u!1 &1998090158
 GameObject:
   m_ObjectHideFlags: 0
@@ -196,14 +149,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1998090158}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc8b99682a578df4ca8c913489cda983, type: 3}
+  m_Script: {fileID: 11500000, guid: 6de51f6ad81245044b7ea02e97ae0159, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   parentReference:
-    TypeName: Extreal.Integration.Multiplay.Common.MVS.App.AppScope
+    TypeName: Extreal.Integration.Messaging.Redis.MVS.App.AppScope
   autoRun: 1
   autoInjectGameObjects: []
-  multiplayClient: {fileID: 1982724503}
 --- !u!4 &1998090160
 Transform:
   m_ObjectHideFlags: 0

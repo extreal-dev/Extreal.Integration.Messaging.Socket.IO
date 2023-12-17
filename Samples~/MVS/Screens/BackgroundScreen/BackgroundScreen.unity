@@ -168,7 +168,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   parentReference:
-    TypeName: Extreal.Integration.Multiplay.Common.MVS.App.AppScope
+    TypeName: Extreal.Integration.Messaging.Redis.MVS.App.AppScope
   autoRun: 1
   autoInjectGameObjects: []
   backgroundScreenView: {fileID: 897331665}

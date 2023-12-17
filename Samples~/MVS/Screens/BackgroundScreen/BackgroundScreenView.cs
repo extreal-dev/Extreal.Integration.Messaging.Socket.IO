@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Extreal.Integration.Multiplay.Common.MVS.Screens.BackgroundScreen
+namespace Extreal.Integration.Messaging.Redis.MVS.Screens.BackgroundScreen
 {
     public class BackgroundScreenView : MonoBehaviour
     {

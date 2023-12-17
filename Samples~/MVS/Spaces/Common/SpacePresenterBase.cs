@@ -1,11 +1,11 @@
 using Cysharp.Threading.Tasks;
 using Extreal.Core.StageNavigation;
-using Extreal.Integration.Multiplay.Common.MVS.App;
-using Extreal.Integration.Multiplay.Common.MVS.App.Config;
-using Extreal.Integration.Multiplay.Common.MVS.App.Stages;
+using Extreal.Integration.Messaging.Redis.MVS.App;
+using Extreal.Integration.Messaging.Redis.MVS.App.Config;
+using Extreal.Integration.Messaging.Redis.MVS.App.Stages;
 using UniRx;
 
-namespace Extreal.Integration.Multiplay.Common.MVS.Spaces.Common
+namespace Extreal.Integration.Messaging.Redis.MVS.Spaces.Common
 {
     public abstract class SpacePresenterBase : StagePresenterBase
     {

@@ -3,22 +3,21 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Extreal.Core.Common.System;
 using Extreal.Core.Logging;
-using Extreal.Integration.P2P.WebRTC;
 using UniRx;
 
-namespace Extreal.Integration.Multiplay.Common.MVS.App
+namespace Extreal.Integration.Messaging.Redis.MVS.App
 {
     [SuppressMessage("Usage", "CC0033")]
     public class AppState : DisposableBase
     {
         private static readonly ELogger Logger = LoggingManager.GetLogger(nameof(AppState));
 
-        private PeerRole role = PeerRole.Host;
+        private UserRole role = UserRole.Host;
         private CommunicationMode communicationMode = CommunicationMode.Massively;
 
         public string PlayerName { get; private set; } = "Guest";
-        public bool IsHost => role == PeerRole.Host;
-        public bool IsClient => role == PeerRole.Client;
+        public bool IsHost => role == UserRole.Host;
+        public bool IsClient => role == UserRole.Client;
         public bool IsMassivelyForCommunication => communicationMode == CommunicationMode.Massively;
         public string GroupName { get; private set; } // Host only
         public string GroupId { get; private set; } // Client only
@@ -75,7 +74,7 @@ namespace Extreal.Integration.Multiplay.Common.MVS.App
         }
 
         public void SetPlayerName(string playerName) => PlayerName = playerName;
-        public void SetRole(PeerRole role) => this.role = role;
+        public void SetRole(UserRole role) => this.role = role;
         public void SetCommunicationMode(CommunicationMode communicationMode) => this.communicationMode = communicationMode;
         public void SetGroupName(string groupName) => GroupName = groupName;
         public void SetGroupId(string groupId) => GroupId = groupId;
@@ -89,6 +88,19 @@ namespace Extreal.Integration.Multiplay.Common.MVS.App
             onNotificationReceived.OnNext(message);
         }
 
+        public void NotifyInfo(string message)
+        {
+            Logger.LogInfo(message);
+            onNotificationReceived.OnNext(message);
+        }
+
         protected override void ReleaseManagedResources() => disposables.Dispose();
+    }
+
+    public enum UserRole
+    {
+        None = 0,
+        Host = 1,
+        Client = 2,
     }
 }

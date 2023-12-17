@@ -7,6 +7,8 @@
     <type fullname="System.Text.Json.JsonSerializer" preserve="all" />
   </assembly>
   <assembly fullname="Extreal.Core.StageNavigation" preserve="all" />
+    <type fullname="Extreal.Core.StageNavigation.StageNavigator" preserve="all" />
+  </assembly>
   <assembly fullname="Extreal.Integration.Web.Common" preserve="all" />
   <assembly fullname="Extreal.Integration.Messaging.Common" preserve="all" />
   <assembly fullname="Extreal.Integration.Messaging.Redis" preserve="all" />

@@ -1,10 +1,10 @@
 ﻿using Extreal.Core.StageNavigation;
-using Extreal.Integration.Multiplay.Common.MVS.App;
-using Extreal.Integration.Multiplay.Common.MVS.App.Config;
-using Extreal.Integration.Multiplay.Common.MVS.App.Stages;
+using Extreal.Integration.Messaging.Redis.MVS.App;
+using Extreal.Integration.Messaging.Redis.MVS.App.Config;
+using Extreal.Integration.Messaging.Redis.MVS.App.Stages;
 using UniRx;
 
-namespace Extreal.Integration.Multiplay.Common.MVS.Controls.NotificationControl
+namespace Extreal.Integration.Messaging.Redis.MVS.Controls.NotificationControl
 {
     public class NotificationControlPresenter : StagePresenterBase
     {

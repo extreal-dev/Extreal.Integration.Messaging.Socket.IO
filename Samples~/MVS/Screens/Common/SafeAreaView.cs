@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 
-namespace Extreal.Integration.Multiplay.Common.MVS.Screens.Common
+namespace Extreal.Integration.Messaging.Redis.MVS.Screens.Common
 {
     public class SafeAreaView : MonoBehaviour
     {

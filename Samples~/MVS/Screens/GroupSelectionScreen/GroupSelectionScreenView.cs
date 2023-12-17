@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Extreal.Integration.P2P.WebRTC;
-using Extreal.Integration.Multiplay.Common.MVS.App;
+using Extreal.Integration.Messaging.Redis.MVS.App;
 using TMPro;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Extreal.Integration.Multiplay.Common.MVS.Screens.GroupSelectionScreen
+namespace Extreal.Integration.Messaging.Redis.MVS.Screens.GroupSelectionScreen
 {
     public class GroupSelectionScreenView : MonoBehaviour
     {
@@ -18,17 +17,15 @@ namespace Extreal.Integration.Multiplay.Common.MVS.Screens.GroupSelectionScreen
         [SerializeField] private TMP_Dropdown groupDropdown;
         [SerializeField] private Button updateButton;
         [SerializeField] private Button goButton;
-        [SerializeField] private Button backButton;
         [SerializeField] private TMP_Text title;
         [SerializeField] private TMP_Text updateButtonLabel;
         [SerializeField] private TMP_Text goButtonLabel;
-        [SerializeField] private TMP_Text backButtonLabel;
 
         public IObservable<CommunicationMode> OnModeChanged =>
             modeDropdown.onValueChanged.AsObservable()
                 .Select(index => Modes[index]).TakeUntilDestroy(this);
 
-        public IObservable<PeerRole> OnRoleChanged =>
+        public IObservable<UserRole> OnRoleChanged =>
             roleDropdown.onValueChanged.AsObservable()
                 .Select(index => Roles[index]).TakeUntilDestroy(this);
 
@@ -41,37 +38,37 @@ namespace Extreal.Integration.Multiplay.Common.MVS.Screens.GroupSelectionScreen
 
         public IObservable<Unit> OnUpdateButtonClicked => updateButton.OnClickAsObservable().TakeUntilDestroy(this);
         public IObservable<Unit> OnGoButtonClicked => goButton.OnClickAsObservable().TakeUntilDestroy(this);
-        public IObservable<Unit> OnBackButtonClicked => backButton.OnClickAsObservable().TakeUntilDestroy(this);
 
         private static readonly List<CommunicationMode> Modes = new List<CommunicationMode> { CommunicationMode.Massively };
-        private static readonly List<PeerRole> Roles = new List<PeerRole> { PeerRole.Host, PeerRole.Client };
+        private static readonly List<UserRole> Roles = new List<UserRole> { UserRole.Host, UserRole.Client };
         private readonly List<string> groupNames = new List<string>();
 
         public void Initialize()
         {
+            Debug.LogWarning($"!!! GroupSelectionScreenView Initialize, Modes:{Modes}, Roles:{Roles}");
             modeDropdown.options = Modes.Select(mode => new TMP_Dropdown.OptionData(mode.ToString())).ToList();
             roleDropdown.options = Roles.Select(role => new TMP_Dropdown.OptionData(role.ToString())).ToList();
             groupDropdown.options = new List<TMP_Dropdown.OptionData>();
 
             OnModeChanged.Subscribe(_ => UpdateGroupNames(Array.Empty<string>()));
             OnRoleChanged.Subscribe(SwitchInputMode);
-            OnGroupNameChanged.Subscribe(_ => CanGo(PeerRole.Host));
+            OnGroupNameChanged.Subscribe(_ => CanGo(UserRole.Host));
         }
 
-        private void SwitchInputMode(PeerRole role)
+        private void SwitchInputMode(UserRole role)
         {
-            groupNameInputField.gameObject.SetActive(role == PeerRole.Host);
-            groupDropdown.gameObject.SetActive(role == PeerRole.Client);
-            updateButton.gameObject.SetActive(role == PeerRole.Client);
+            groupNameInputField.gameObject.SetActive(role == UserRole.Host);
+            groupDropdown.gameObject.SetActive(role == UserRole.Client);
+            updateButton.gameObject.SetActive(role == UserRole.Client);
             CanGo(role);
         }
 
-        private void CanGo(PeerRole role) =>
+        private void CanGo(UserRole role) =>
             goButton.gameObject.SetActive(
-                (role == PeerRole.Host && groupNameInputField.text.Length > 0)
-                || (role == PeerRole.Client && groupDropdown.options.Count > 0));
+                (role == UserRole.Host && groupNameInputField.text.Length > 0)
+                || (role == UserRole.Client && groupDropdown.options.Count > 0));
 
-        public void SetInitialValues(PeerRole role, CommunicationMode communicationMode)
+        public void SetInitialValues(UserRole role, CommunicationMode communicationMode)
         {
             modeDropdown.value = Modes.IndexOf(communicationMode);
             roleDropdown.value = Roles.IndexOf(role);

@@ -1,12 +1,12 @@
-﻿using Extreal.Integration.Multiplay.Common.MVS.App.AssetWorkflow;
+﻿using Extreal.Integration.Messaging.Redis.MVS.App.AssetWorkflow;
 using Extreal.Core.Logging;
 using Extreal.Core.StageNavigation;
-using Extreal.Integration.Multiplay.Common.MVS.App.Config;
+using Extreal.Integration.Messaging.Redis.MVS.App.Config;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
-namespace Extreal.Integration.Multiplay.Common.MVS.App
+namespace Extreal.Integration.Messaging.Redis.MVS.App
 {
     public class AppScope : LifetimeScope
     {

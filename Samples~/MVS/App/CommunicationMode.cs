@@ -1,4 +1,4 @@
-namespace Extreal.Integration.Multiplay.Common.MVS.App
+namespace Extreal.Integration.Messaging.Redis.MVS.App
 {
     public enum CommunicationMode
     {

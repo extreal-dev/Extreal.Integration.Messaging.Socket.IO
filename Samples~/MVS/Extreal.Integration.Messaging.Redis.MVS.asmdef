@@ -1,0 +1,39 @@
+{
+    "name": "Extreal.Integration.Messaging.Redis.MVS",
+    "rootNamespace": "Extreal.Integration.Messaging.Redis.MVS",
+    "references": [
+        "Cinemachine",
+        "Unity.Addressables",
+        "Unity.Collections",
+        "Unity.InputSystem",
+        "Unity.ResourceManager",
+        "Unity.TextMeshPro",
+        "Unity.WebRTC",
+        "UniRx",
+        "UniTask",
+        "VContainer",
+        "Extreal.Core.Logging",
+        "Extreal.Core.StageNavigation",
+        "Extreal.Core.Common",
+        "Extreal.Integration.AssetWorkflow.Addressables",
+        "Extreal.Integration.Web.Common",
+        "Extreal.Integration.P2P.WebRTC",
+        "Extreal.Integration.Messaging.Common",
+        "Extreal.Integration.Messaging.Redis"
+    ],
+    "includePlatforms": [
+        "Android",
+        "Editor",
+        "iOS",
+        "WebGL",
+        "WindowsStandalone64"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

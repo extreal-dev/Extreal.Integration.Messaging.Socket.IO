@@ -1,14 +1,16 @@
-﻿namespace Extreal.Integration.Multiplay.Common.MVS.App.Config
+﻿namespace Extreal.Integration.Messaging.Redis.MVS.App.Config
 {
     public enum SceneName
     {
         // Controls
         CameraControl = 100,
         LightControl = 103,
-        InputControl = 101,
+        InputSystemControl = 111,
         NotificationControl = 102,
         ClientControl = 107,
         MassivelyMultiplayControl = 112,
+        TextChatControl = 110,
+
         SpaceControl = 108,
         RetryStatusControl = 109,
 

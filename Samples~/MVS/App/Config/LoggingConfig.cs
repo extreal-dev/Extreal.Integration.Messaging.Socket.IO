@@ -4,7 +4,7 @@ using System.Linq;
 using Extreal.Core.Logging;
 using UnityEngine;
 
-namespace Extreal.Integration.Multiplay.Common.MVS.App.Config
+namespace Extreal.Integration.Messaging.Redis.MVS.App.Config
 {
     [CreateAssetMenu(
         menuName = nameof(MVS) + "/" + nameof(LoggingConfig),

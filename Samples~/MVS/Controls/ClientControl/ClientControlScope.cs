@@ -1,16 +1,12 @@
-﻿using UnityEngine;
-using VContainer;
+﻿using VContainer;
 using VContainer.Unity;
-using Extreal.Integration.Messaging.Redis;
 using SocketIOClient;
 using Extreal.Integration.Messaging.Common;
 
-namespace Extreal.Integration.Multiplay.Common.MVS.Controls.ClientControl
+namespace Extreal.Integration.Messaging.Redis.MVS.Controls.ClientControl
 {
     public class ClientControlScope : LifetimeScope
     {
-        [SerializeField] private MultiplayClient multiplayClient;
-
         protected override void Configure(IContainerBuilder builder)
         {
             var redisMessagingConfig = new RedisMessagingConfig("http://localhost:3030", new SocketIOOptions { EIO = EngineIO.V4 });
@@ -22,11 +18,8 @@ namespace Extreal.Integration.Multiplay.Common.MVS.Controls.ClientControl
 
             var messagingClient = new MessagingClient();
             messagingClient.SetTransport(redisMessagingTransport);
-            var queuingMessagingClient = new QueuingMessagingClient(messagingClient);
-            multiplayClient.SetMessagingClient(queuingMessagingClient);
-            builder.RegisterComponent(multiplayClient);
 
-
+            builder.RegisterComponent(messagingClient);
             builder.RegisterEntryPoint<ClientControlPresenter>();
         }
     }
