@@ -11,12 +11,17 @@ using System.Linq;
 
 namespace Extreal.Integration.Messaging.Redis
 {
+    /// <summary>
+    /// Class that implement IMessagingTransport using Redis.
+    /// </summary>
     public abstract class RedisMessagingTransport : DisposableBase, IMessagingTransport
     {
+        /// <inheritdoc/>
         public bool IsConnected { get; private set; }
         protected void SetConnectStatus(bool isConnected)
             => IsConnected = isConnected;
 
+        /// <inheritdoc/>
         public IObservable<string> OnConnected => onConnected;
         private readonly Subject<string> onConnected;
         protected void FireOnConnected(string userId) => UniTask.Void(async () =>
@@ -30,6 +35,7 @@ namespace Extreal.Integration.Messaging.Redis
             onConnected.OnNext(userId);
         });
 
+        /// <inheritdoc/>
         public IObservable<string> OnDisconnecting => onDisconnecting;
         private readonly Subject<string> onDisconnecting;
         protected void FireOnDisconnecting(string reason) => UniTask.Void(async () =>
@@ -43,6 +49,7 @@ namespace Extreal.Integration.Messaging.Redis
             onDisconnecting.OnNext(reason);
         });
 
+        /// <inheritdoc/>
         public IObservable<string> OnUnexpectedDisconnected => onUnexpectedDisconnected;
         private readonly Subject<string> onUnexpectedDisconnected;
         protected void FireOnUnexpectedDisconnected(string reason) => UniTask.Void(async () =>
@@ -57,6 +64,7 @@ namespace Extreal.Integration.Messaging.Redis
             onUnexpectedDisconnected.OnNext(reason);
         });
 
+        /// <inheritdoc/>
         public IObservable<Unit> OnConnectionApprovalRejected => onConnectionApprovalRejected;
         private readonly Subject<Unit> onConnectionApprovalRejected;
         protected void FireOnConnectionApprovalRejected() => UniTask.Void(async () =>
@@ -70,6 +78,7 @@ namespace Extreal.Integration.Messaging.Redis
             onConnectionApprovalRejected.OnNext(Unit.Default);
         });
 
+        /// <inheritdoc/>
         public IObservable<string> OnUserConnected => onUserConnected;
         private readonly Subject<string> onUserConnected;
         protected void FireOnUserConnected(string userId) => UniTask.Void(async () =>
@@ -83,6 +92,7 @@ namespace Extreal.Integration.Messaging.Redis
             onUserConnected.OnNext(userId);
         });
 
+        /// <inheritdoc/>
         public IObservable<string> OnUserDisconnecting => onUserDisconnecting;
         private readonly Subject<string> onUserDisconnecting;
         protected void FireOnUserDisconnecting(string userId) => UniTask.Void(async () =>
@@ -96,6 +106,7 @@ namespace Extreal.Integration.Messaging.Redis
             onUserDisconnecting.OnNext(userId);
         });
 
+        /// <inheritdoc/>
         public IObservable<(string userId, string message)> OnMessageReceived => onMessageReceived;
         private readonly Subject<(string, string)> onMessageReceived;
         protected void FireOnMessageReceived(string userId, string message) => UniTask.Void(async () =>
@@ -135,6 +146,7 @@ namespace Extreal.Integration.Messaging.Redis
 
         protected abstract void DoReleaseManagedResources();
 
+        /// <inheritdoc/>
         public async UniTask<List<Group>> ListGroupsAsync()
         {
             var groupList = await DoListGroupsAsync();
@@ -143,6 +155,7 @@ namespace Extreal.Integration.Messaging.Redis
 
         protected abstract UniTask<GroupList> DoListGroupsAsync();
 
+        /// <inheritdoc/>
         public async UniTask ConnectAsync(MessagingConnectionConfig connectionConfig)
         {
             if (Logger.IsDebug())
@@ -165,21 +178,24 @@ namespace Extreal.Integration.Messaging.Redis
 
         protected abstract UniTask<string> DoConnectAsync(MessagingConnectionConfig connectionConfig, string localUserId);
 
-        public async UniTask DisconnectAsync()
+        /// <inheritdoc/>
+        public UniTask DisconnectAsync()
         {
             if (Logger.IsDebug())
             {
                 Logger.LogDebug(nameof(DisconnectAsync));
             }
             FireOnDisconnecting("disconnect request");
-            await DoDisconnectAsync();
+            return DoDisconnectAsync();
         }
 
         protected abstract UniTask DoDisconnectAsync();
 
+        /// <inheritdoc/>
         public UniTask DeleteGroupAsync()
             => SendMessageAsync("delete group");
 
+        /// <inheritdoc/>
         public async UniTask SendMessageAsync(string message, string to = default)
         {
             if (!IsConnected)
