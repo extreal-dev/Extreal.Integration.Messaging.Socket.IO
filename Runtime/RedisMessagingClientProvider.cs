@@ -5,7 +5,7 @@ namespace Extreal.Integration.Messaging.Redis
     /// <summary>
     /// Class that provides RedisMessagingTransport.
     /// </summary>
-    public static class RedisMessagingTransportProvider
+    public static class RedisMessagingClientProvider
     {
         /// <summary>
         /// Provides RedisMessagingTransport.
@@ -16,7 +16,7 @@ namespace Extreal.Integration.Messaging.Redis
         /// <param name="messagingConfig">Messaging config for Redis.</param>
         /// <exception cref="ArgumentNullException">When messagingConfig is null.</exception>
         /// <returns>RedisMessagingTransport.</returns>
-        public static RedisMessagingTransport Provide(RedisMessagingConfig messagingConfig)
+        public static RedisMessagingClient Provide(RedisMessagingConfig messagingConfig)
         {
             if (messagingConfig == null)
             {
@@ -24,9 +24,9 @@ namespace Extreal.Integration.Messaging.Redis
             }
 
 #if !UNITY_WEBGL || UNITY_EDITOR
-            return new NativeRedisMessagingTransport(messagingConfig);
+            return new NativeRedisMessagingClient(messagingConfig);
 #else
-            return new WebGLRedisMessagingTransport(new WebGLRedisMessagingConfig(messagingConfig));
+            return new WebGLRedisMessagingClient(new WebGLRedisMessagingConfig(messagingConfig));
 #endif
         }
     }

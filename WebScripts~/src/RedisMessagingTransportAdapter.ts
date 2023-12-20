@@ -1,60 +1,68 @@
-import { RedisMessagingTransport } from "./RedisMessagingTransport";
+import { RedisMessagingClient } from "./RedisMessagingClient";
 import { addAction, callback } from "@extreal-dev/extreal.integration.web.common";
 
-type RedisMessagingTransportProvider = () => RedisMessagingTransport;
-
-class RedisMessagingTransportAdapter {
-    private redisMessagingTransport: RedisMessagingTransport | undefined;
+class RedisMessagingAdapter {
+    private redisMessagingClient: RedisMessagingClient | undefined;
 
     public adapt = () => {
-        addAction(this.withPrefix("WebGLRedisMessagingTransport"), (jsonRedisMessagingConfig) => {
+        addAction(this.withPrefix("WebGLRedisMessagingClient"), (jsonRedisMessagingConfig) => {
             const redisMessagingConfig = JSON.parse(jsonRedisMessagingConfig);
             if (redisMessagingConfig.isDebug) {
                 console.log(redisMessagingConfig);
             }
-            this.redisMessagingTransport = new RedisMessagingTransport(redisMessagingConfig, {
-                setConnectStatus: (isConnected) => callback(this.withPrefix("HandleConnectStatus"), isConnected),
-                onDisconnecting: (reason) => callback(this.withPrefix("HandleOnDisconnecting"), reason),
-                onUnexpectedDisconnected: (reason) =>
-                    callback(this.withPrefix("HandleOnUnexpectedDisconnected"), reason),
-                onUserConnected: (userId) => callback(this.withPrefix("HandleOnUserConnected"), userId),
-                onUserDisconnecting: (userId) => callback(this.withPrefix("HandleOnUserDisconnecting"), userId),
+            this.redisMessagingClient = new RedisMessagingClient(redisMessagingConfig, {
+                setJoiningGroupStatus: (isConnected) =>
+                    callback(this.withPrefix("HandleJoiningGroupStatus"), isConnected),
+                onLeaving: (reason) => callback(this.withPrefix("HandleOnLeaving"), reason),
+                onUnexpectedLeft: (reason) => callback(this.withPrefix("HandleOnUnexpectedLeft"), reason),
+                onUserJoined: (userId) => callback(this.withPrefix("HandleOnUserJoined"), userId),
+                onUserLeaving: (userId) => callback(this.withPrefix("HandleOnUserLeaving"), userId),
                 onMessageReceived: (userId, message) =>
                     callback(this.withPrefix("HandleOnMessageReceived"), userId, message),
             });
         });
 
-        addAction(this.withPrefix("DoReleaseManagedResources"), () => {
-            this.getRedisMessagingTransport().releaseManagedResources();
-        });
+        addAction(this.withPrefix("DoReleaseManagedResources"), () =>
+            this.getRedisMessagingClient().releaseManagedResources(),
+        );
 
-        addAction(this.withPrefix("DoListGroupsAsync"), () => {
-            this.getRedisMessagingTransport().listGroups((response) =>
+        addAction(this.withPrefix("DoListGroupsAsync"), () =>
+            this.getRedisMessagingClient().listGroups((response) =>
                 callback(this.withPrefix("ReceiveGroupList"), JSON.stringify(response)),
-            );
-        });
-
-        addAction(this.withPrefix("DoConnectAsync"), (connectionConfig) =>
-            this.getRedisMessagingTransport().connectAsync(JSON.parse(connectionConfig), (response) =>
-                callback(this.withPrefix("ReceiveConnectMessage"), response),
             ),
         );
 
-        addAction(this.withPrefix("DoDisconnectAsync"), () => this.getRedisMessagingTransport().disconnectAsync());
+        addAction(this.withPrefix("DoCreateGroupAsync"), (groupName, maxCapacity) =>
+            this.getRedisMessagingClient().createGroup(groupName, Number.parseInt(maxCapacity), (response) =>
+                callback(this.withPrefix("ReceiveCreateGroupMessage"), JSON.stringify(response)),
+            ),
+        );
+
+        addAction(this.withPrefix("DeleteGroupAsync"), (groupName) =>
+            this.getRedisMessagingClient().deleteGroup(groupName),
+        );
+
+        addAction(this.withPrefix("DoJoinAsync"), (userId, groupName) =>
+            this.getRedisMessagingClient().join(userId, groupName, (response) =>
+                callback(this.withPrefix("ReceiveJoinMessage"), response),
+            ),
+        );
+
+        addAction(this.withPrefix("DoLeaveAsync"), () => this.getRedisMessagingClient().leave());
 
         addAction(this.withPrefix("DoSendMessageAsync"), (message) =>
-            this.getRedisMessagingTransport().sendMessage(message),
+            this.getRedisMessagingClient().sendMessage(JSON.parse(message)),
         );
     };
 
-    private withPrefix = (name: string) => `WebGLRedisMessagingTransport#${name}`;
+    private withPrefix = (name: string) => `WebGLRedisMessagingClient#${name}`;
 
-    public getRedisMessagingTransport: RedisMessagingTransportProvider = () => {
-        if (!this.redisMessagingTransport) {
-            throw new Error("Call the WebGLRedisMessagingTransport constructor first in Unity.");
+    public getRedisMessagingClient = () => {
+        if (!this.redisMessagingClient) {
+            throw new Error("Call the WebGLRedisMessagingClient constructor first in Unity.");
         }
-        return this.redisMessagingTransport;
+        return this.redisMessagingClient;
     };
 }
 
-export { RedisMessagingTransportAdapter, RedisMessagingTransportProvider };
+export { RedisMessagingAdapter };

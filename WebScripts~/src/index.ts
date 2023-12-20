@@ -1,2 +1,2 @@
 export * from "./RedisMessagingTransportAdapter";
-export * from "./RedisMessagingTransport";
+export * from "./RedisMessagingClient";

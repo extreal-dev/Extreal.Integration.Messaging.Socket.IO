@@ -6,10 +6,9 @@ type RedisMessagingConfig = {
     isDebug: boolean;
 };
 
-type MessagingConnectionConfig = {
-    userId: string;
-    groupName: string;
-    maxCapacity: number;
+type CreateGroupResponse = {
+    status: number;
+    message: string;
 };
 
 type GroupList = {
@@ -22,24 +21,24 @@ type Message = {
     messageContent: string;
 };
 
-type RedisMessagingTransportCallbacks = {
-    setConnectStatus: (isConnected: string) => void;
-    onDisconnecting: (reason: string) => void;
-    onUnexpectedDisconnected: (reason: string) => void;
-    onUserConnected: (userId: string) => void;
-    onUserDisconnecting: (userId: string) => void;
+type RedisMessagingClientCallbacks = {
+    setJoiningGroupStatus: (isJoinedGroup: string) => void;
+    onLeaving: (reason: string) => void;
+    onUnexpectedLeft: (reason: string) => void;
+    onUserJoined: (userId: string) => void;
+    onUserLeaving: (userId: string) => void;
     onMessageReceived: (userId: string, message: string) => void;
 };
 
-class RedisMessagingTransport {
+class RedisMessagingClient {
     private readonly isDebug: boolean;
 
     private readonly redisMessagingConfig: RedisMessagingConfig;
     private socket: Socket | null;
 
-    private readonly callbacks: RedisMessagingTransportCallbacks;
+    private readonly callbacks: RedisMessagingClientCallbacks;
 
-    constructor(redisMessagingConfig: RedisMessagingConfig, callbacks: RedisMessagingTransportCallbacks) {
+    constructor(redisMessagingConfig: RedisMessagingConfig, callbacks: RedisMessagingClientCallbacks) {
         this.socket = null;
         this.redisMessagingConfig = redisMessagingConfig;
         this.isDebug = redisMessagingConfig.isDebug;
@@ -58,8 +57,9 @@ class RedisMessagingTransport {
         this.socket = socket;
 
         this.socket.on("disconnect", this.receiveDisconnect);
-        this.socket.on("user connected", this.receiveUserConnected);
-        this.socket.on("user disconnecting", this.receiveUserDisconnecting);
+        this.socket.on("delete group", this.receiveDeleteGroup);
+        this.socket.on("user joined", this.receiveUserJoined);
+        this.socket.on("user leaving", this.receiveUserLeaving);
         this.socket.on("message", this.receiveMessageAsync);
 
         this.socket.connect();
@@ -78,7 +78,7 @@ class RedisMessagingTransport {
 
         this.socket.close();
         this.socket = null;
-        this.callbacks.setConnectStatus("false");
+        this.callbacks.setJoiningGroupStatus("false");
     };
 
     public releaseManagedResources = () => {
@@ -94,29 +94,35 @@ class RedisMessagingTransport {
         });
     };
 
-    public connectAsync = (connectionConfig: MessagingConnectionConfig, handle: (response: string) => void) => {
-        this.getSocket().emit(
-            "join",
-            connectionConfig.userId,
-            connectionConfig.groupName,
-            connectionConfig.maxCapacity,
-            (response: string) => {
-                if (this.isDebug) {
-                    console.log(response);
-                }
-                handle(response);
-            },
-        );
+    public createGroup = (groupName: string, maxCapacity: number, handle: (response: CreateGroupResponse) => void) => {
+        this.getSocket().emit("create group", groupName, maxCapacity, (response: CreateGroupResponse) => {
+            if (this.isDebug) {
+                console.log(response);
+            }
+            handle(response);
+        });
     };
 
-    public disconnectAsync = () => {
+    public deleteGroup = (groupName: string) => {
+        this.getSocket().emit("delete group", groupName);
+    };
+
+    public join = (userId: string, groupName: string, handle: (response: string) => void) => {
+        this.getSocket().emit("join", userId, groupName, (response: string) => {
+            if (this.isDebug) {
+                console.log(response);
+            }
+            handle(response);
+        });
+    };
+
+    public leave = () => {
         this.stopSocket();
     };
 
-    public sendMessage = (message: string) => {
+    public sendMessage = (message: Message) => {
         if (this.socket) {
-            const messageJson = JSON.parse(message);
-            this.socket.emit("message", messageJson);
+            this.socket.emit("message", message);
         }
     };
 
@@ -124,36 +130,34 @@ class RedisMessagingTransport {
         if (this.isDebug) {
             console.log(`Receive disconnect: reason=${reason}`);
         }
-        this.callbacks.onUnexpectedDisconnected(reason);
+        this.callbacks.onUnexpectedLeft(reason);
     };
 
-    private receiveUserConnected = (userId: string) => {
-        if (this.isDebug) {
-            console.log(userId);
-        }
-        this.callbacks.onUserConnected(`Receive user connected: ${userId}`);
+    public receiveDeleteGroup = () => {
+        this.callbacks.onLeaving("delete group");
+        this.stopSocket();
     };
 
-    private receiveUserDisconnecting = (userId: string) => {
+    private receiveUserJoined = (userId: string) => {
         if (this.isDebug) {
-            console.log(`Receive user disconnecting: ${userId}`);
+            console.log(`Receive user joined: ${userId}`);
         }
-        this.callbacks.onUserDisconnecting(userId);
+        this.callbacks.onUserJoined(userId);
+    };
+
+    private receiveUserLeaving = (userId: string) => {
+        if (this.isDebug) {
+            console.log(`Receive user leaving: ${userId}`);
+        }
+        this.callbacks.onUserLeaving(userId);
     };
 
     private receiveMessageAsync = async (message: Message) => {
         if (this.isDebug) {
             console.log(`Receive message: ${message}`);
         }
-
-        if (message.messageContent === "delete group") {
-            this.callbacks.onDisconnecting("delete group");
-            this.stopSocket();
-            return;
-        }
-
         this.callbacks.onMessageReceived(message.from, message.messageContent);
     };
 }
 
-export { RedisMessagingTransport };
+export { RedisMessagingClient };

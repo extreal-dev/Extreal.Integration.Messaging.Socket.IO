@@ -12,7 +12,7 @@ const appPort = Number(process.env.APP_PORT) || 3030;
 const apiPort = Number(process.env.API_PORT) || 3031;
 const redisHost = process.env.REDIS_HOST || "localhost";
 const redisPort = Number(process.env.REDIS_PORT) || 7379;
-const isDebug = process.env.LOGGING === "on";
+const isLogging = process.env.LOGGING === "on";
 
 // const promClient = require('prom-client');
 const register = new promClient.Registry();
@@ -39,6 +39,11 @@ type Message = {
     to: string;
 };
 
+type CreateGroupResponse = {
+    status: number;
+    message: string;
+};
+
 type ListGroupsResponse = {
     groups: Group[];
 };
@@ -46,6 +51,12 @@ type ListGroupsResponse = {
 type Group = {
     id: string;
     name: string;
+};
+
+const log = (logMessage: string | object) => {
+    if (isLogging) {
+        console.log(logMessage);
+    }
 };
 
 const httpServer = createServer(app);
@@ -63,13 +74,13 @@ const pubClient = createClient({ url: redisUrl }).on("error", (err) => {
     process.exit(1);
 });
 app.listen(apiPort, () => {
-    if (isDebug) {
+    if (isLogging) {
         console.log(`Start on port ${apiPort}`);
     }
 });
 const subClient = pubClient.duplicate();
 subClient.on("error", (err) => {
-    if (isDebug) {
+    if (isLogging) {
         console.log("Redis subClient Error", err);
     }
 });
@@ -81,67 +92,23 @@ const rooms = (): Map<string, Set<string>> => {
 };
 
 io.on("connection", async (socket: Socket) => {
-    let groupName = "";
-    let userId = "";
+    let myGroupName = "";
+    let myUserId = "";
 
-    socket.on(
-        "join",
-        async (
-            receivedUserId: string,
-            receivedGroupName: string,
-            receivedMaxCapacity: number,
-            callback: (response: string) => void,
-        ) => {
-            groupName = receivedGroupName;
-            userId = receivedUserId;
-
-            if (
-                ![...rooms().entries()]
-                    .filter((entry) => !entry[1].has(entry[0]))
-                    .find((entry) => entry[0] === groupName) &&
-                receivedMaxCapacity !== 0
-            ) {
-                await redisClient.set(`MaxCapacity#${groupName}`, receivedMaxCapacity);
-            }
-
-            const maxCapacityStr = await redisClient.get(`MaxCapacity#${groupName}`);
-            if (maxCapacityStr) {
-                const maxCapacity = Number.parseInt(maxCapacityStr);
-                const connectedClientNum = rooms().get(groupName)?.size as number;
-                if (connectedClientNum >= maxCapacity) {
-                    if (isDebug) {
-                        console.log(`Reject user: ${userId}`);
-                    }
-                    callback("rejected");
-                    return;
+    const getGroupList = async () => {
+        const newGroupList = new Array<string>();
+        const groupListStr = await redisClient.get("GroupList");
+        if (groupListStr) {
+            const groupList = JSON.parse(groupListStr);
+            for (let i = 0; i < groupList.length; i++) {
+                if (rooms().get(groupList[i])) {
+                    newGroupList.push(groupList[i]);
                 }
             }
-
-            callback("approved");
-            if (isDebug) {
-                console.log(`join: userId=${userId}, groupName=${groupName}`);
-            }
-            await redisClient.set(userId, socket.id.toString());
-            await socket.join(groupName);
-            socket.to(groupName).emit("user connected", userId);
-
-            return;
-        },
-    );
-
-    socket.on("message", async (message: Message) => {
-        message.from = userId;
-        if (message.to) {
-            const socketId = await redisClient.get(message.to);
-            if (socketId) {
-                socket.to(socketId).emit("message", message);
-            }
-            return;
+            await redisClient.set("GroupList", JSON.stringify(newGroupList));
         }
-        if (groupName) {
-            socket.to(groupName).emit("message", message);
-        }
-    });
+        return newGroupList;
+    };
 
     socket.on("list groups", (callback: (response: ListGroupsResponse) => void) => {
         callback({
@@ -151,21 +118,92 @@ io.on("connection", async (socket: Socket) => {
         });
     });
 
-    const handleDisconnect = () => {
-        if (groupName) {
-            if (isDebug) {
-                console.log(`user disconnecting[${socket.id}]`);
+    socket.on(
+        "create group",
+        async (groupName: string, maxCapacity: number, callback: (response: CreateGroupResponse) => void) => {
+            const wrapper = (response: CreateGroupResponse) => {
+                log(response);
+                callback(response);
+            };
+
+            const groupList = await getGroupList();
+            if (groupList.includes(groupName)) {
+                const message = `Group already exists. groupName: ${groupName}`;
+                wrapper({ status: 409, message: message });
+                return;
             }
-            socket.to(groupName).emit("user disconnecting", userId);
-            socket.leave(groupName);
-            groupName = "";
+            groupList.push(groupName);
+            await redisClient.set("GroupList", JSON.stringify(groupList));
+
+            if (maxCapacity) {
+                await redisClient.set(`MaxCapacity#${groupName}`, maxCapacity);
+            }
+
+            const message = `Group have been created. groupName: ${groupName}`;
+            wrapper({ status: 200, message: message });
+        },
+    );
+
+    socket.on("delete group", async (groupName: string) => {
+        socket.to(groupName).emit("delete group");
+    });
+
+    socket.on("join", async (userId: string, groupName: string, callback: (response: string) => void) => {
+        myGroupName = groupName;
+        myUserId = userId;
+
+        const maxCapacityStr = await redisClient.get(`MaxCapacity#${myGroupName}`);
+        if (maxCapacityStr) {
+            const maxCapacity = Number.parseInt(maxCapacityStr);
+            const connectedClientNum = rooms().get(myGroupName)?.size as number;
+            if (connectedClientNum >= maxCapacity) {
+                if (isLogging) {
+                    console.log(`Reject user: ${myUserId}`);
+                }
+                callback("rejected");
+                return;
+            }
+        }
+
+        callback("approved");
+        if (isLogging) {
+            console.log(`join: userId=${myUserId}, groupName=${myGroupName}`);
+        }
+        await redisClient.set(myUserId, socket.id.toString());
+        await socket.join(myGroupName);
+        socket.to(myGroupName).emit("user joined", myUserId);
+    });
+
+    socket.on("message", async (message: Message) => {
+        message.from = myUserId;
+        if (message.to) {
+            const socketId = await redisClient.get(message.to);
+            if (socketId) {
+                socket.to(socketId).emit("message", message);
+            }
+            return;
+        }
+        if (myGroupName) {
+            socket.to(myGroupName).emit("message", message);
+        }
+    });
+
+    const handleDisconnect = async () => {
+        if (myGroupName) {
+            if (isLogging) {
+                console.log(`user leaving: ${socket.id}`);
+            }
+            socket.to(myGroupName).emit("user leaving", myUserId);
+            socket.leave(myGroupName);
+
+            myGroupName = "";
         }
     };
 
     socket.on("leave", handleDisconnect);
 
     socket.on("disconnect", () => {
-        if (isDebug) {
+        if (isLogging) {
             console.log("disconnect");
         }
         handleDisconnect();
@@ -177,7 +215,7 @@ io.on("connection", async (socket: Socket) => {
     });
 
     await redisClient.connect();
-    if (isDebug) {
+    if (isLogging) {
         console.log(`worker: connected id: ${socket.id}`);
     }
 });
@@ -191,7 +229,7 @@ Promise.all([pubClient.connect(), subClient.connect()])
         console.error("Socket.io Listen Error: %o", err);
     })
     .finally(() => {
-        if (isDebug) {
+        if (isLogging) {
             console.log(`Socket.io Listen: ${appPort}`);
             console.log("=================================Restarted======================================");
         }
