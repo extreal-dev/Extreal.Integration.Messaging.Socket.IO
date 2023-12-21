@@ -66,6 +66,7 @@ namespace Extreal.Integration.Messaging.Redis
 
             await ioClient.EmitAsync("leave");
 
+            await ioClient.DisconnectAsync();
             ioClient.Dispose();
             ioClient = null;
             SetJoiningGroupStatus(false);

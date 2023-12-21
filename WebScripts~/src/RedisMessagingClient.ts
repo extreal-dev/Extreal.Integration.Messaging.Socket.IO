@@ -76,7 +76,7 @@ class RedisMessagingClient {
 
         this.socket.emit("leave");
 
-        this.socket.close();
+        this.socket.disconnect();
         this.socket = null;
         this.callbacks.setJoiningGroupStatus("false");
     };
