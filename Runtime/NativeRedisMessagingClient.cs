@@ -13,12 +13,17 @@ namespace Extreal.Integration.Messaging.Redis
 
         private SocketIO ioClient;
         private CancellationTokenSource cancellation;
+        private readonly CancellationTokenSource cancellationForSocketInProgress = new CancellationTokenSource();
+
+        private bool socketStopInProgress;
 
         public NativeRedisMessagingClient(RedisMessagingConfig messagingConfig) : base()
             => redisMessagingConfig = messagingConfig;
 
         private async UniTask<SocketIO> GetSocketAsync()
         {
+            await UniTask.WaitWhile(() => socketStopInProgress, cancellationToken: cancellationForSocketInProgress.Token);
+
             if (ioClient is not null)
             {
                 if (ioClient.Connected)
@@ -59,6 +64,8 @@ namespace Extreal.Integration.Messaging.Redis
                 return;
             }
 
+            socketStopInProgress = true;
+
             cancellation.Cancel();
             cancellation.Dispose();
 
@@ -70,10 +77,16 @@ namespace Extreal.Integration.Messaging.Redis
             ioClient.Dispose();
             ioClient = null;
             SetJoiningGroupStatus(false);
+
+            socketStopInProgress = false;
         }
 
         protected override void DoReleaseManagedResources()
-            => StopSocketAsync().Forget();
+        {
+            cancellationForSocketInProgress.Cancel();
+            cancellationForSocketInProgress.Dispose();
+            StopSocketAsync().Forget();
+        }
 
         protected override async UniTask<GroupListResponse> DoListGroupsAsync()
         {
