@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Cysharp.Threading.Tasks;
 using Extreal.Core.StageNavigation;
+using Extreal.Integration.Messaging.Redis;
 using Extreal.Integration.Messaging.Common;
 using Extreal.Integration.Messaging.Redis.MVS.App;
 using Extreal.Integration.Messaging.Redis.MVS.App.Config;
@@ -11,18 +12,18 @@ namespace Extreal.Integration.Messaging.Redis.MVS.Screens.GroupSelectionScreen
 {
     public class GroupSelectionScreenPresenter : StagePresenterBase
     {
-        private readonly GroupManager groupManager;
+        private readonly RedisMessagingClient redisMessagingClient;
         private readonly GroupSelectionScreenView groupSelectionScreenView;
 
         public GroupSelectionScreenPresenter
         (
             StageNavigator<StageName, SceneName> stageNavigator,
             AppState appState,
-            GroupManager groupManager,
+            RedisMessagingClient redisMessagingClient,
             GroupSelectionScreenView groupSelectionScreenView
         ) : base(stageNavigator, appState)
         {
-            this.groupManager = groupManager;
+            this.redisMessagingClient = redisMessagingClient;
             this.groupSelectionScreenView = groupSelectionScreenView;
         }
 
@@ -55,7 +56,7 @@ namespace Extreal.Integration.Messaging.Redis.MVS.Screens.GroupSelectionScreen
             groupSelectionScreenView.OnUpdateButtonClicked
               .Subscribe(async _ =>
                 {
-                    var groups = await groupManager.ListGroupsAsync();
+                    var groups = await redisMessagingClient.ListGroupsAsync();
                     var groupNames = groups.Select(group => group.Name).ToArray();
                     groupSelectionScreenView.UpdateGroupNames(groupNames);
                     if (groups.Count > 0)

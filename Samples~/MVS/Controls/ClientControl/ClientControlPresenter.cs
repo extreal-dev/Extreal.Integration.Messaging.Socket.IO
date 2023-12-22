@@ -10,14 +10,14 @@ namespace Extreal.Integration.Messaging.Redis.MVS.Controls.ClientControl
 {
     public class ClientControlPresenter : StagePresenterBase
     {
-        private readonly MessagingClient messagingClient;
+        private readonly RedisMessagingClient redisMessagingClient;
 
         public ClientControlPresenter(
             StageNavigator<StageName, SceneName> stageNavigator,
             AppState appState,
-            MessagingClient messagingClient) : base(stageNavigator, appState)
+            RedisMessagingClient redisMessagingClient) : base(stageNavigator, appState)
         {
-            this.messagingClient = messagingClient;
+            this.redisMessagingClient = redisMessagingClient;
         }
 
         protected override void Initialize(
