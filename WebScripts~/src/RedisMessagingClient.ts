@@ -27,7 +27,7 @@ type RedisMessagingClientCallbacks = {
     onUnexpectedLeft: (reason: string) => void;
     onUserJoined: (userId: string) => void;
     onUserLeaving: (userId: string) => void;
-    onMessageReceived: (userId: string, message: string) => void;
+    onMessageReceived: (message: Message) => void;
 };
 
 class RedisMessagingClient {
@@ -156,7 +156,7 @@ class RedisMessagingClient {
         if (this.isDebug) {
             console.log(`Receive message: ${message}`);
         }
-        this.callbacks.onMessageReceived(message.from, message.messageContent);
+        this.callbacks.onMessageReceived(message);
     };
 }
 
