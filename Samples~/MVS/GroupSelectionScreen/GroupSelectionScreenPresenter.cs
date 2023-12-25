@@ -1,8 +1,6 @@
 ﻿using System.Linq;
 using Cysharp.Threading.Tasks;
 using Extreal.Core.StageNavigation;
-using Extreal.Integration.Messaging.Redis;
-using Extreal.Integration.Messaging.Common;
 using Extreal.Integration.Messaging.Redis.MVS.App;
 using Extreal.Integration.Messaging.Redis.MVS.App.Config;
 using Extreal.Integration.Messaging.Redis.MVS.App.Stages;
@@ -34,10 +32,6 @@ namespace Extreal.Integration.Messaging.Redis.MVS.Screens.GroupSelectionScreen
             CompositeDisposable sceneDisposables
         )
         {
-            groupSelectionScreenView.OnModeChanged
-                .Subscribe(appState.SetCommunicationMode)
-                .AddTo(sceneDisposables);
-
             groupSelectionScreenView.OnRoleChanged
                 .Subscribe(appState.SetRole)
                 .AddTo(sceneDisposables);
@@ -47,10 +41,7 @@ namespace Extreal.Integration.Messaging.Redis.MVS.Screens.GroupSelectionScreen
                 .AddTo(sceneDisposables);
 
             groupSelectionScreenView.OnGroupChanged
-                .Subscribe((groupName) =>
-                {
-                    appState.SetGroupName(groupName);
-                })
+                .Subscribe(appState.SetGroupName)
                 .AddTo(sceneDisposables);
 
             groupSelectionScreenView.OnUpdateButtonClicked
@@ -62,7 +53,6 @@ namespace Extreal.Integration.Messaging.Redis.MVS.Screens.GroupSelectionScreen
                     if (groups.Count > 0)
                     {
                         appState.SetGroupName(groups.First().Name);
-                        appState.SetGroupId(groups.First().Id);
                     }
                 })
                 .AddTo(sceneDisposables);
@@ -81,8 +71,7 @@ namespace Extreal.Integration.Messaging.Redis.MVS.Screens.GroupSelectionScreen
         {
             groupSelectionScreenView.Initialize();
             var role = appState.IsHost ? UserRole.Host : UserRole.Client;
-            var communicationMode = CommunicationMode.Massively;
-            groupSelectionScreenView.SetInitialValues(role, communicationMode);
+            groupSelectionScreenView.SetInitialValues(role);
         }
     }
 }

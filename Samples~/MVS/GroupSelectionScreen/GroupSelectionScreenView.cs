@@ -11,19 +11,11 @@ namespace Extreal.Integration.Messaging.Redis.MVS.Screens.GroupSelectionScreen
 {
     public class GroupSelectionScreenView : MonoBehaviour
     {
-        [SerializeField] private TMP_Dropdown modeDropdown;
         [SerializeField] private TMP_Dropdown roleDropdown;
         [SerializeField] private TMP_InputField groupNameInputField;
         [SerializeField] private TMP_Dropdown groupDropdown;
         [SerializeField] private Button updateButton;
         [SerializeField] private Button goButton;
-        [SerializeField] private TMP_Text title;
-        [SerializeField] private TMP_Text updateButtonLabel;
-        [SerializeField] private TMP_Text goButtonLabel;
-
-        public IObservable<CommunicationMode> OnModeChanged =>
-            modeDropdown.onValueChanged.AsObservable()
-                .Select(index => Modes[index]).TakeUntilDestroy(this);
 
         public IObservable<UserRole> OnRoleChanged =>
             roleDropdown.onValueChanged.AsObservable()
@@ -39,18 +31,14 @@ namespace Extreal.Integration.Messaging.Redis.MVS.Screens.GroupSelectionScreen
         public IObservable<Unit> OnUpdateButtonClicked => updateButton.OnClickAsObservable().TakeUntilDestroy(this);
         public IObservable<Unit> OnGoButtonClicked => goButton.OnClickAsObservable().TakeUntilDestroy(this);
 
-        private static readonly List<CommunicationMode> Modes = new List<CommunicationMode> { CommunicationMode.Massively };
         private static readonly List<UserRole> Roles = new List<UserRole> { UserRole.Host, UserRole.Client };
         private readonly List<string> groupNames = new List<string>();
 
         public void Initialize()
         {
-            Debug.LogWarning($"!!! GroupSelectionScreenView Initialize, Modes:{Modes}, Roles:{Roles}");
-            modeDropdown.options = Modes.Select(mode => new TMP_Dropdown.OptionData(mode.ToString())).ToList();
             roleDropdown.options = Roles.Select(role => new TMP_Dropdown.OptionData(role.ToString())).ToList();
             groupDropdown.options = new List<TMP_Dropdown.OptionData>();
 
-            OnModeChanged.Subscribe(_ => UpdateGroupNames(Array.Empty<string>()));
             OnRoleChanged.Subscribe(SwitchInputMode);
             OnGroupNameChanged.Subscribe(_ => CanGo(UserRole.Host));
         }
@@ -68,9 +56,8 @@ namespace Extreal.Integration.Messaging.Redis.MVS.Screens.GroupSelectionScreen
                 (role == UserRole.Host && groupNameInputField.text.Length > 0)
                 || (role == UserRole.Client && groupDropdown.options.Count > 0));
 
-        public void SetInitialValues(UserRole role, CommunicationMode communicationMode)
+        public void SetInitialValues(UserRole role)
         {
-            modeDropdown.value = Modes.IndexOf(communicationMode);
             roleDropdown.value = Roles.IndexOf(role);
             groupNameInputField.text = string.Empty;
             groupDropdown.value = 0;

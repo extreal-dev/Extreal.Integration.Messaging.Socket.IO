@@ -1,5 +1,4 @@
-﻿using Extreal.Integration.Messaging.Redis.MVS.App.AssetWorkflow;
-using Extreal.Core.Logging;
+﻿using Extreal.Core.Logging;
 using Extreal.Core.StageNavigation;
 using Extreal.Integration.Messaging.Redis.MVS.App.Config;
 using UnityEngine;
@@ -10,7 +9,6 @@ namespace Extreal.Integration.Messaging.Redis.MVS.App
 {
     public class AppScope : LifetimeScope
     {
-        [SerializeField] private AppConfig appConfig;
         [SerializeField] private StageConfig stageConfig;
 
         private static void InitializeApp()
@@ -32,12 +30,10 @@ namespace Extreal.Integration.Messaging.Redis.MVS.App
 
         protected override void Configure(IContainerBuilder builder)
         {
-            builder.RegisterComponent(appConfig);
             builder.Register<AppState>(Lifetime.Singleton);
 
             builder.RegisterComponent(stageConfig).AsImplementedInterfaces();
             builder.Register<StageNavigator<StageName, SceneName>>(Lifetime.Singleton);
-            builder.Register<AssetHelper>(Lifetime.Singleton);
             builder.RegisterEntryPoint<AppPresenter>();
         }
     }
