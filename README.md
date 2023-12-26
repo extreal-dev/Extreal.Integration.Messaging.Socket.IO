@@ -10,7 +10,7 @@
    ```
 
 - Import the sample MVS from Package Manager.
-- Enter the following command in the `MVS/WebScripts` directory.
+- Enter the following command in the `MVS/WebScripts~` directory.
 
    ```bash
    yarn
@@ -33,28 +33,23 @@
 
 ## Test cases for manual testing
 
-### Host
+### Functional Test
 
 - Group selection screen
-  - Ability to create a group by specifying a name (host)
+  - Ability to create a group by specifying a name with host role selected (create group)
+  - Ability to list groups with client role selected (list groups)
+  - Ability to join a group (join group)
+  - Ability to return to title screen (dispose messaging client)
 - VirtualSpace
-  - Client can join a group (client join)
-  - Clients can leave the group (client exit)
-  - Ability to send text (text chat)
-  - Ability to return to the group selection screen (host stop)
-
-### Client
-
-- Group selection screen
-  - Ability to join a group (join host)
-- Virtual space
-  - Ability to send text (text chat)
-  - Ability to return to the group selection screen (leave host)
+  - Clients can join the group (client joins)
+  - Clients can leave the group (client leaves)
+  - Ability to send text (send text chat)
+  - Ability to see received text (receive text chat)
+  - Ability to return to group selection screen with host role selected (delete group)
+  - Ability to return to group selection screen with client role selected (leave group)
 
 ### Failure Test
-Client
-- Join as a third user (joining approval rejected )
 
-Host
-- join and then shut down the messaging server (unexpected disconnection)
+- Join as a third user (joining approval rejected )
+- join and then shut down the messaging server (unexpected leave)
 - Create a group and join after shutting down the messaging server (connection exception)
