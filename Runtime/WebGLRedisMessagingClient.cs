@@ -14,9 +14,10 @@ namespace Extreal.Integration.Messaging.Redis
 {
     public class WebGLRedisMessagingClient : RedisMessagingClient
     {
-        private GroupListResponse groupList;
-        private CreateGroupResponse createGroupResponse;
-        private string joinMessage;
+        private WebGLGroupListResponse groupListResponse;
+        private WebGLCreateGroupResponse createGroupResponse;
+        private int status;
+        private WebGLJoinResponse joinResponse;
 
         private CancellationTokenSource cancellation = new CancellationTokenSource();
         private readonly CompositeDisposable disposables = new CompositeDisposable();
@@ -26,37 +27,41 @@ namespace Extreal.Integration.Messaging.Redis
         private static readonly CompositeDisposable StaticDisposables = new CompositeDisposable();
 
         [SuppressMessage("Usage", "CC0022")]
-        public WebGLRedisMessagingClient(WebGLRedisMessagingConfig messagingConfig) : base()
+        public WebGLRedisMessagingClient(WebGLRedisMessagingConfig messagingConfig)
         {
             instanceNum++;
             instanceId = Guid.NewGuid().ToString();
-            onGroupListResponseReceived ??= new Subject<(GroupListResponse groupListResponse, string id)>().AddTo(StaticDisposables);
-            onCreateGroupResponseReceived ??= new Subject<(CreateGroupResponse createGroupResponse, string id)>().AddTo(StaticDisposables);
-            onJoinMessageReceived ??= new Subject<(string joinMessage, string instanceId)>().AddTo(StaticDisposables);
-            onJoiningGroupStatusReceived ??= new Subject<(bool isConnected, string instanceId)>().AddTo(StaticDisposables);
-            onLeavingEventReceived ??= new Subject<(string reason, string instanceId)>().AddTo(StaticDisposables);
-            onUnexpectedLeftEventReceived ??= new Subject<(string reason, string instanceId)>().AddTo(StaticDisposables);
-            onUserJoinedEventReceived ??= new Subject<(string userId, string instanceId)>().AddTo(StaticDisposables);
-            onUserLeavingEventReceived ??= new Subject<(string userId, string instanceId)>().AddTo(StaticDisposables);
-            onMessageReceivedEventReceived ??= new Subject<(Message message, string instanceId)>().AddTo(StaticDisposables);
+            onGroupListResponseReceived ??= new Subject<(WebGLGroupListResponse, string)>().AddTo(StaticDisposables);
+            onCreateGroupResponseReceived ??= new Subject<(WebGLCreateGroupResponse, string)>().AddTo(StaticDisposables);
+            onDeleteGroupResponseReceived ??= new Subject<(int, string)>().AddTo(StaticDisposables);
+            onJoinMessageReceived ??= new Subject<(WebGLJoinResponse, string)>().AddTo(StaticDisposables);
+            onJoiningGroupStatusReceived ??= new Subject<(bool, string)>().AddTo(StaticDisposables);
+            onLeavingEventReceived ??= new Subject<(string, string)>().AddTo(StaticDisposables);
+            onUnexpectedLeftEventReceived ??= new Subject<(string, string)>().AddTo(StaticDisposables);
+            onUserJoinedEventReceived ??= new Subject<(string, string)>().AddTo(StaticDisposables);
+            onUserLeavingEventReceived ??= new Subject<(string, string)>().AddTo(StaticDisposables);
+            onMessageReceivedEventReceived ??= new Subject<(Message, string)>().AddTo(StaticDisposables);
+            onStopSocketCalled ??= new Subject<string>().AddTo(StaticDisposables);
 
             WebGLHelper.CallAction(WithPrefix(nameof(WebGLRedisMessagingClient)), JsonRedisMessagingConfig.ToJson(messagingConfig), instanceId);
-            WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveGroupList)), ReceiveGroupList);
-            WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveCreateGroupMessage)), ReceiveCreateGroupMessage);
-            WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveJoinMessage)), ReceiveJoinMessage);
+            WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveGroupListResponse)), ReceiveGroupListResponse);
+            WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveCreateGroupResponse)), ReceiveCreateGroupResponse);
+            WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveDeleteGroupResponse)), ReceiveDeleteGroupResponse);
+            WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveJoinResponse)), ReceiveJoinResponse);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleJoiningGroupStatus)), HandleJoiningGroupStatus);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnLeaving)), HandleOnLeaving);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnUnexpectedLeft)), HandleOnUnexpectedLeft);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnUserJoined)), HandleOnUserJoined);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnUserLeaving)), HandleOnUserLeaving);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnMessageReceived)), HandleOnMessageReceived);
+            WebGLHelper.AddCallback(WithPrefix(nameof(StopSocket)), StopSocket);
 
             onGroupListResponseReceived
                 .Subscribe(values =>
                 {
                     if (values.instanceId == instanceId)
                     {
-                        groupList = values.groupListResponse;
+                        groupListResponse = values.groupListResponse;
                     }
                 })
                 .AddTo(disposables);
@@ -71,12 +76,22 @@ namespace Extreal.Integration.Messaging.Redis
                 })
                 .AddTo(disposables);
 
+            onDeleteGroupResponseReceived
+                .Subscribe(values =>
+                {
+                    if (values.instanceId == instanceId)
+                    {
+                        status = values.status;
+                    }
+                })
+                .AddTo(disposables);
+
             onJoinMessageReceived
                 .Subscribe(values =>
                 {
                     if (values.instanceId == instanceId)
                     {
-                        joinMessage = values.joinMessage;
+                        joinResponse = values.joinResponse;
                     }
                 })
                 .AddTo(disposables);
@@ -140,22 +155,37 @@ namespace Extreal.Integration.Messaging.Redis
                     }
                 })
                 .AddTo(disposables);
+
+            onStopSocketCalled
+                .Subscribe(instanceId =>
+                {
+                    if (instanceId == this.instanceId)
+                    {
+                        StopSocket();
+                    }
+                })
+                .AddTo(disposables);
         }
 
-        private static Subject<(GroupListResponse groupListResponse, string instanceId)> onGroupListResponseReceived;
+        private static Subject<(WebGLGroupListResponse groupListResponse, string instanceId)> onGroupListResponseReceived;
         [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void ReceiveGroupList(string jsonResponse, string instanceId)
-            => onGroupListResponseReceived.OnNext((JsonSerializer.Deserialize<GroupListResponse>(jsonResponse), instanceId));
+        private static void ReceiveGroupListResponse(string jsonResponse, string instanceId)
+            => onGroupListResponseReceived.OnNext((JsonSerializer.Deserialize<WebGLGroupListResponse>(jsonResponse), instanceId));
 
-        private static Subject<(CreateGroupResponse createGroupResponse, string instanceId)> onCreateGroupResponseReceived;
+        private static Subject<(WebGLCreateGroupResponse createGroupResponse, string instanceId)> onCreateGroupResponseReceived;
         [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void ReceiveCreateGroupMessage(string jsonResponse, string instanceId)
-            => onCreateGroupResponseReceived.OnNext((JsonSerializer.Deserialize<CreateGroupResponse>(jsonResponse), instanceId));
+        private static void ReceiveCreateGroupResponse(string jsonResponse, string instanceId)
+            => onCreateGroupResponseReceived.OnNext((JsonSerializer.Deserialize<WebGLCreateGroupResponse>(jsonResponse), instanceId));
 
-        private static Subject<(string joinMessage, string instanceId)> onJoinMessageReceived;
+        private static Subject<(int status, string instanceId)> onDeleteGroupResponseReceived;
         [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void ReceiveJoinMessage(string joinMessage, string instanceId)
-            => onJoinMessageReceived.OnNext((joinMessage, instanceId));
+        private static void ReceiveDeleteGroupResponse(string status, string instanceId)
+            => onDeleteGroupResponseReceived.OnNext((int.Parse(status), instanceId));
+
+        private static Subject<(WebGLJoinResponse joinResponse, string instanceId)> onJoinMessageReceived;
+        [MonoPInvokeCallback(typeof(Action<string, string>))]
+        private static void ReceiveJoinResponse(string joinResponse, string instanceId)
+            => onJoinMessageReceived.OnNext((JsonSerializer.Deserialize<WebGLJoinResponse>(joinResponse), instanceId));
 
         private static Subject<(bool isConnected, string instanceId)> onJoiningGroupStatusReceived;
         [MonoPInvokeCallback(typeof(Action<string, string>))]
@@ -187,6 +217,11 @@ namespace Extreal.Integration.Messaging.Redis
         private static void HandleOnMessageReceived(string message, string instanceId)
             => onMessageReceivedEventReceived.OnNext((JsonSerializer.Deserialize<Message>(message), instanceId));
 
+        private static Subject<string> onStopSocketCalled;
+        [MonoPInvokeCallback(typeof(Action<string, string>))]
+        private static void StopSocket(string instanceId, string unused)
+            => onStopSocketCalled.OnNext(instanceId);
+
         protected override void DoReleaseManagedResources()
         {
             cancellation.Dispose();
@@ -199,53 +234,77 @@ namespace Extreal.Integration.Messaging.Redis
             }
         }
 
+        private void StopSocket()
+        {
+            cancellation.Cancel();
+            cancellation.Dispose();
+            cancellation = new CancellationTokenSource();
+        }
+
         protected override async UniTask<GroupListResponse> DoListGroupsAsync()
         {
             WebGLHelper.CallAction(WithPrefix(nameof(DoListGroupsAsync)), instanceId);
-            await UniTask.WaitUntil(() => groupList != null, cancellationToken: cancellation.Token);
-            var result = groupList;
-            groupList = null;
-            return result;
+            await UniTask.WaitUntil(() => groupListResponse != null, cancellationToken: cancellation.Token);
+
+            var result = groupListResponse;
+            groupListResponse = null;
+            CheckConnectionStatusCode(result.Status);
+
+            return result.GroupListResponse;
         }
 
         protected override async UniTask<CreateGroupResponse> DoCreateGroupAsync(GroupConfig groupConfig)
         {
             WebGLHelper.CallAction(WithPrefix(nameof(DoCreateGroupAsync)), JsonGroupConfig.ToJson(groupConfig), instanceId);
             await UniTask.WaitUntil(() => createGroupResponse != null, cancellationToken: cancellation.Token);
+
             var result = createGroupResponse;
             createGroupResponse = null;
-            return result;
+            CheckConnectionStatusCode(result.Status);
+
+            return result.CreateGroupResponse;
         }
 
 #pragma warning disable CS1998
         public override async UniTask DeleteGroupAsync(string groupName)
 #pragma warning restore CS1998
-            => WebGLHelper.CallAction(WithPrefix(nameof(DeleteGroupAsync)), groupName, instanceId);
+        {
+            WebGLHelper.CallAction(WithPrefix(nameof(DeleteGroupAsync)), groupName, instanceId);
+            await UniTask.WaitUntil(() => status != default, cancellationToken: cancellation.Token);
+
+            var result = status;
+            status = default;
+            CheckConnectionStatusCode(result);
+        }
 
         protected override async UniTask<string> DoJoinAsync(MessagingJoiningConfig connectionConfig, string localUserId)
         {
             WebGLHelper.CallAction(WithPrefix(nameof(DoJoinAsync)), JsonJoiningConfig.ToJson(localUserId, connectionConfig.GroupName), instanceId);
-            await UniTask.WaitUntil(() => joinMessage != null, cancellationToken: cancellation.Token);
-            var result = joinMessage;
-            joinMessage = null;
-            return result;
+            await UniTask.WaitUntil(() => joinResponse != null, cancellationToken: cancellation.Token);
+
+            var result = joinResponse;
+            joinResponse = null;
+            CheckConnectionStatusCode(result.Status);
+
+            return result.Message;
         }
 
 #pragma warning disable CS1998
         protected override async UniTask DoLeaveAsync()
-#pragma warning restore CS1998
-        {
-            cancellation.Cancel();
-            cancellation.Dispose();
-            cancellation = new CancellationTokenSource();
-
-            WebGLHelper.CallAction(WithPrefix(nameof(DoLeaveAsync)), instanceId);
-        }
-
 #pragma warning disable CS1998
+            => WebGLHelper.CallAction(WithPrefix(nameof(DoLeaveAsync)), instanceId);
+
         protected override async UniTask DoSendMessageAsync(Message message)
 #pragma warning restore CS1998
             => WebGLHelper.CallAction(WithPrefix(nameof(DoSendMessageAsync)), JsonSerializer.Serialize(message), instanceId);
+
+        private static void CheckConnectionStatusCode(int status)
+        {
+            if (status == 504)
+            {
+                throw new TimeoutException("Connection failed.");
+            }
+        }
 
         private static string WithPrefix(string name) => $"{nameof(WebGLRedisMessagingClient)}#{name}";
     }
@@ -333,6 +392,36 @@ namespace Extreal.Integration.Messaging.Redis
     {
         [JsonPropertyName("userId")]
         public string UserId { get; set; }
+
+        [JsonPropertyName("message")]
+        public string Message { get; set; }
+    }
+
+    [SuppressMessage("Usage", "CC0047")]
+    public class WebGLGroupListResponse
+    {
+        [JsonPropertyName("status")]
+        public int Status { get; set; }
+
+        [JsonPropertyName("groupListResponse")]
+        public GroupListResponse GroupListResponse { get; set; }
+    }
+
+    [SuppressMessage("Usage", "CC0047")]
+    public class WebGLCreateGroupResponse
+    {
+        [JsonPropertyName("status")]
+        public int Status { get; set; }
+
+        [JsonPropertyName("createGroupResponse")]
+        public CreateGroupResponse CreateGroupResponse { get; set; }
+    }
+
+    [SuppressMessage("Usage", "CC0047")]
+    public class WebGLJoinResponse
+    {
+        [JsonPropertyName("status")]
+        public int Status { get; set; }
 
         [JsonPropertyName("message")]
         public string Message { get; set; }

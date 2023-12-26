@@ -1,19 +1,25 @@
-﻿using Extreal.Core.StageNavigation;
+﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using Extreal.Core.StageNavigation;
 using Extreal.Integration.Messaging.Redis.MVS.App;
-using Extreal.Integration.Messaging.Redis.MVS.App.Config;
-using Extreal.Integration.Messaging.Redis.MVS.App.Stages;
 using UniRx;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.Controls.NotificationControl
+namespace Extreal.Integration.Messaging.Redis.MVS.NotificationControl
 {
     public class NotificationControlPresenter : StagePresenterBase
     {
         private readonly NotificationControlView notificationControlView;
 
-        public NotificationControlPresenter(
+        private readonly Queue<string> notifications = new Queue<string>();
+        private bool isShown;
+
+        [SuppressMessage("Usage", "CC0057")]
+        public NotificationControlPresenter
+        (
             StageNavigator<StageName, SceneName> stageNavigator,
             AppState appState,
-            NotificationControlView notificationControlView) : base(stageNavigator, appState)
+            NotificationControlView notificationControlView
+        ) : base(stageNavigator, appState)
             => this.notificationControlView = notificationControlView;
 
         protected override void Initialize(
@@ -22,12 +28,39 @@ namespace Extreal.Integration.Messaging.Redis.MVS.Controls.NotificationControl
             CompositeDisposable sceneDisposables)
         {
             appState.OnNotificationReceived
-                .Subscribe(notificationControlView.Show)
+                .Subscribe(NotificationReceivedHandler)
                 .AddTo(sceneDisposables);
 
             notificationControlView.OnOkButtonClicked
-                .Subscribe(_ => notificationControlView.Hide())
+                .Subscribe(_ => OkButtonClickedHandler())
                 .AddTo(sceneDisposables);
+        }
+
+        private void NotificationReceivedHandler(string notification)
+        {
+            if (isShown)
+            {
+                notifications.Enqueue(notification);
+            }
+            else
+            {
+                notificationControlView.Show(notification);
+                isShown = true;
+            }
+        }
+
+        private void OkButtonClickedHandler()
+        {
+            if (notifications.Count > 0)
+            {
+                var notification = notifications.Dequeue();
+                notificationControlView.Show(notification);
+            }
+            else
+            {
+                notificationControlView.Hide();
+                isShown = false;
+            }
         }
     }
 }

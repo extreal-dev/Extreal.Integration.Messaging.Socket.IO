@@ -14,10 +14,6 @@ namespace Extreal.Integration.Messaging.Redis
     {
         private static readonly ELogger Logger = LoggingManager.GetLogger(nameof(RedisMessagingClient));
 
-        protected RedisMessagingClient() : base()
-        {
-        }
-
         protected sealed override async UniTask DoJoinAsync(MessagingJoiningConfig joiningConfig)
         {
             if (Logger.IsDebug())

@@ -2,7 +2,7 @@
 using VContainer;
 using VContainer.Unity;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.Controls.NotificationControl
+namespace Extreal.Integration.Messaging.Redis.MVS.NotificationControl
 {
     public class NotificationControlScope : LifetimeScope
     {

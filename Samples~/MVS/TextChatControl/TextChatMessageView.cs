@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.Controls.TextChatControl
+namespace Extreal.Integration.Messaging.Redis.MVS.TextChatControl
 {
     public class TextChatMessageView : MonoBehaviour
     {

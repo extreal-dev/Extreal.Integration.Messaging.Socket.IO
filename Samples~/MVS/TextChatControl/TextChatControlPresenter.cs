@@ -1,88 +1,92 @@
 ﻿using System.Linq;
-using Extreal.Core.Common.System;
 using UniRx;
 using VContainer.Unity;
 using Extreal.Integration.Messaging.Common;
 using Extreal.Core.StageNavigation;
-using Extreal.Integration.Messaging.Redis.MVS.App.Config;
 using Extreal.Integration.Messaging.Redis.MVS.App;
-using SocketIOClient;
-namespace Extreal.Integration.Messaging.Redis.MVS.Controls.TextChatControl
+using Cysharp.Threading.Tasks;
+using System;
+
+namespace Extreal.Integration.Messaging.Redis.MVS.TextChatControl
 {
-    public class TextChatControlPresenter : DisposableBase, IInitializable
+    public class TextChatControlPresenter : StagePresenterBase, IInitializable
     {
-        private readonly StageNavigator<StageName, SceneName> stageNavigator;
-        private RedisMessagingClient redisMessagingClient;
+        private readonly RedisMessagingClient redisMessagingClient;
         private readonly TextChatControlView textChatControlView;
-        private readonly AppState appState;
-        private readonly int maxCapacity = 2;
-
-        private readonly CompositeDisposable disposables = new CompositeDisposable();
-
         public TextChatControlPresenter
         (
             StageNavigator<StageName, SceneName> stageNavigator,
             RedisMessagingClient redisMessagingClient,
             TextChatControlView textChatControlView,
             AppState appState
-        )
+        ) : base(stageNavigator, appState)
         {
-            this.stageNavigator = stageNavigator;
             this.redisMessagingClient = redisMessagingClient;
             this.textChatControlView = textChatControlView;
-            this.appState = appState;
         }
 
-        public void Initialize()
+        protected override void Initialize(StageNavigator<StageName, SceneName> stageNavigator, AppState appState, CompositeDisposable sceneDisposables)
         {
-            // var redisMessagingConfig = new RedisMessagingConfig("http://localhost:3030", new SocketIOOptions { EIO = EngineIO.V4 });
-            // messagingClient = RedisMessagingClientProvider.Provide(redisMessagingConfig);
             textChatControlView.OnSendButtonClicked
                 .Where(message => !string.IsNullOrWhiteSpace(message))
                 .Subscribe(message =>
                 {
-                    redisMessagingClient.SendMessageAsync(message);
+                    redisMessagingClient.SendMessageAsync(message).Forget();
                     textChatControlView.ShowSentMessage(message);
                 })
-                .AddTo(disposables);
-
-            redisMessagingClient.OnUnexpectedLeft
-                .Subscribe(_ => appState.Notify("messagingClient disconnected unexpectedly."))
-                .AddTo(disposables);
-
-            redisMessagingClient.OnJoiningApprovalRejected
-                .Subscribe(_ =>
-                {
-                    appState.Notify("Space is full.");
-                })
-                .AddTo(disposables);
-
-            redisMessagingClient.OnJoined
-                .Subscribe(_ => appState.NotifyInfo("Connected."))
-                .AddTo(disposables);
-
-            var groupConfig = new GroupConfig(appState.GroupName, maxCapacity);
-            var messagingConfig = new MessagingJoiningConfig(appState.GroupName);
-
-            stageNavigator.OnStageTransitioned
-                .Subscribe(_ => redisMessagingClient.JoinAsync(messagingConfig))
-                .AddTo(disposables);
-
-            stageNavigator.OnStageTransitioning
-                .Subscribe(_ => redisMessagingClient.LeaveAsync())
-                .AddTo(disposables);
+                .AddTo(sceneDisposables);
 
             redisMessagingClient.OnMessageReceived
                 .Subscribe(textChatControlView.ShowMessage)
-                .AddTo(disposables);
+                .AddTo(sceneDisposables);
 
             textChatControlView.Initialize();
         }
 
-        protected override void ReleaseManagedResources()
+        protected override void OnStageEntered(StageName stageName, AppState appState, CompositeDisposable stageDisposables) => UniTask.Void(async () =>
         {
-            // textChatClient.Clear();
-            disposables.Dispose();
-        }
+            if (appState.IsHost)
+            {
+                try
+                {
+                    var groupConfig = new GroupConfig(appState.GroupName, 2);
+                    await redisMessagingClient.CreateGroupAsync(groupConfig);
+                }
+                catch (Exception e)
+                {
+                    appState.Notify($"Fail to create group: {e.Message}");
+                    return;
+                }
+            }
+
+            try
+            {
+                var messagingConfig = new MessagingJoiningConfig(appState.GroupName);
+                await redisMessagingClient.JoinAsync(messagingConfig);
+            }
+            catch (Exception e)
+            {
+                appState.Notify($"Fail to Join a group: {e.Message}");
+            }
+        });
+
+        protected override void OnStageExiting(StageName stageName, AppState appState) => UniTask.Void(async () =>
+        {
+            if (appState.IsHost)
+            {
+                try
+                {
+                    await redisMessagingClient.DeleteGroupAsync(appState.GroupName);
+                }
+                catch (Exception e)
+                {
+                    appState.Notify($"Fail to delete a group: {e.Message}");
+                }
+            }
+            else
+            {
+                await redisMessagingClient.LeaveAsync();
+            }
+        });
     }
 }

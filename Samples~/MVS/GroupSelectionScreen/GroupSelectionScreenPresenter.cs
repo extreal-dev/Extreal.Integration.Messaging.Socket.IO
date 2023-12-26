@@ -1,12 +1,11 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Cysharp.Threading.Tasks;
 using Extreal.Core.StageNavigation;
 using Extreal.Integration.Messaging.Redis.MVS.App;
-using Extreal.Integration.Messaging.Redis.MVS.App.Config;
-using Extreal.Integration.Messaging.Redis.MVS.App.Stages;
 using UniRx;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.Screens.GroupSelectionScreen
+namespace Extreal.Integration.Messaging.Redis.MVS.GroupSelectionScreen
 {
     public class GroupSelectionScreenPresenter : StagePresenterBase
     {
@@ -47,18 +46,29 @@ namespace Extreal.Integration.Messaging.Redis.MVS.Screens.GroupSelectionScreen
             groupSelectionScreenView.OnUpdateButtonClicked
               .Subscribe(async _ =>
                 {
-                    var groups = await redisMessagingClient.ListGroupsAsync();
-                    var groupNames = groups.Select(group => group.Name).ToArray();
-                    groupSelectionScreenView.UpdateGroupNames(groupNames);
-                    if (groups.Count > 0)
+                    try
                     {
-                        appState.SetGroupName(groups.First().Name);
+                        var groups = await redisMessagingClient.ListGroupsAsync();
+                        var groupNames = groups.Select(group => group.Name).ToArray();
+                        groupSelectionScreenView.UpdateGroupNames(groupNames);
+                        if (groups.Count > 0)
+                        {
+                            appState.SetGroupName(groups.First().Name);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        appState.Notify($"Failed to list groups: {e.Message}");
                     }
                 })
                 .AddTo(sceneDisposables);
 
             groupSelectionScreenView.OnGoButtonClicked
                 .Subscribe(_ => stageNavigator.ReplaceAsync(StageName.VirtualStage).Forget())
+                .AddTo(sceneDisposables);
+
+            groupSelectionScreenView.OnBackButtonClicked
+                .Subscribe(_ => stageNavigator.ReplaceAsync(StageName.TitleStage).Forget())
                 .AddTo(sceneDisposables);
         }
 

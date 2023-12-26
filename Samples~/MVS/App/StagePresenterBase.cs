@@ -1,11 +1,10 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Extreal.Core.Common.System;
 using Extreal.Core.StageNavigation;
-using Extreal.Integration.Messaging.Redis.MVS.App.Config;
 using UniRx;
 using VContainer.Unity;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.App.Stages
+namespace Extreal.Integration.Messaging.Redis.MVS.App
 {
     public abstract class StagePresenterBase : DisposableBase, IInitializable
     {

@@ -1,7 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using Extreal.Core.Common.System;
 using Extreal.Core.StageNavigation;
-using Extreal.Integration.Messaging.Redis.MVS.App.Config;
+using Extreal.Integration.Messaging.Redis.MVS.App;
 using UniRx;
 using VContainer.Unity;
 

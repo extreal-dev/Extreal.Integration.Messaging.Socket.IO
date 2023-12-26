@@ -5,7 +5,7 @@ using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.Controls.NotificationControl
+namespace Extreal.Integration.Messaging.Redis.MVS.NotificationControl
 {
     public class NotificationControlView : MonoBehaviour
     {
@@ -15,7 +15,7 @@ namespace Extreal.Integration.Messaging.Redis.MVS.Controls.NotificationControl
 
         public IObservable<Unit> OnOkButtonClicked => okButton.OnClickAsObservable().TakeUntilDestroy(this);
 
-        [SuppressMessage("Style", "IDE0051")]
+        [SuppressMessage("Style", "CC0068")]
         private void Start() => canvas.SetActive(false);
 
         public void Show(string message)

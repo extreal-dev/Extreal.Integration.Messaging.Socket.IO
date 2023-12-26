@@ -7,7 +7,7 @@ using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.Screens.GroupSelectionScreen
+namespace Extreal.Integration.Messaging.Redis.MVS.GroupSelectionScreen
 {
     public class GroupSelectionScreenView : MonoBehaviour
     {
@@ -16,6 +16,7 @@ namespace Extreal.Integration.Messaging.Redis.MVS.Screens.GroupSelectionScreen
         [SerializeField] private TMP_Dropdown groupDropdown;
         [SerializeField] private Button updateButton;
         [SerializeField] private Button goButton;
+        [SerializeField] private Button backButton;
 
         public IObservable<UserRole> OnRoleChanged =>
             roleDropdown.onValueChanged.AsObservable()
@@ -30,6 +31,7 @@ namespace Extreal.Integration.Messaging.Redis.MVS.Screens.GroupSelectionScreen
 
         public IObservable<Unit> OnUpdateButtonClicked => updateButton.OnClickAsObservable().TakeUntilDestroy(this);
         public IObservable<Unit> OnGoButtonClicked => goButton.OnClickAsObservable().TakeUntilDestroy(this);
+        public IObservable<Unit> OnBackButtonClicked => backButton.OnClickAsObservable().TakeUntilDestroy(this);
 
         private static readonly List<UserRole> Roles = new List<UserRole> { UserRole.Host, UserRole.Client };
         private readonly List<string> groupNames = new List<string>();

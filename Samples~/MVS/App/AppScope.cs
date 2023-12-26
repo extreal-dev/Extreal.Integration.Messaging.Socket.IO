@@ -1,6 +1,5 @@
 ﻿using Extreal.Core.Logging;
 using Extreal.Core.StageNavigation;
-using Extreal.Integration.Messaging.Redis.MVS.App.Config;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;

@@ -2,7 +2,7 @@
 using VContainer.Unity;
 using SocketIOClient;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.Controls.ClientControl
+namespace Extreal.Integration.Messaging.Redis.MVS.ClientControl
 {
     public class ClientControlScope : LifetimeScope
     {

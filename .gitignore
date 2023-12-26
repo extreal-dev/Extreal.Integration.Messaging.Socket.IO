@@ -75,3 +75,4 @@ crashlytics-build.properties
 WebScripts~/dist
 WebScripts~/node_modules
 RedisServer~/node_modules
+Samples~/MVS/WebGLScripts~/node_modules

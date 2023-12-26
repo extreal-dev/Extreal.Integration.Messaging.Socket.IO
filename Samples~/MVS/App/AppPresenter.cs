@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Cysharp.Threading.Tasks;
 using Extreal.Core.StageNavigation;
-using Extreal.Integration.Messaging.Redis.MVS.App.Config;
 using VContainer.Unity;
 
 namespace Extreal.Integration.Messaging.Redis.MVS.App
@@ -15,6 +14,6 @@ namespace Extreal.Integration.Messaging.Redis.MVS.App
             => this.stageNavigator = stageNavigator;
 
         public void Start()
-            => stageNavigator.ReplaceAsync(StageName.GroupSelectionStage).Forget();
+            => stageNavigator.ReplaceAsync(StageName.TitleStage).Forget();
     }
 }

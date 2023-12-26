@@ -12,17 +12,19 @@ namespace Extreal.Integration.Messaging.Redis
         private readonly RedisMessagingConfig redisMessagingConfig;
 
         private SocketIO ioClient;
-        private CancellationTokenSource cancellation;
+        private CancellationTokenSource cancellation = new CancellationTokenSource();
         private readonly CancellationTokenSource cancellationForSocketInProgress = new CancellationTokenSource();
 
-        private bool socketStopInProgress;
+        private bool getSocketInProgress;
+        private bool stopSocketInProgress;
 
-        public NativeRedisMessagingClient(RedisMessagingConfig messagingConfig) : base()
+        [SuppressMessage("Usage", "CC0057")]
+        public NativeRedisMessagingClient(RedisMessagingConfig messagingConfig)
             => redisMessagingConfig = messagingConfig;
 
         private async UniTask<SocketIO> GetSocketAsync()
         {
-            await UniTask.WaitWhile(() => socketStopInProgress, cancellationToken: cancellationForSocketInProgress.Token);
+            await UniTask.WaitWhile(() => getSocketInProgress || stopSocketInProgress, cancellationToken: cancellationForSocketInProgress.Token);
 
             if (ioClient is not null)
             {
@@ -34,7 +36,7 @@ namespace Extreal.Integration.Messaging.Redis
                 await StopSocketAsync();
             }
 
-            cancellation = new CancellationTokenSource();
+            getSocketInProgress = true;
 
             ioClient = new SocketIO(redisMessagingConfig.Url, redisMessagingConfig.SocketIOOptions);
 
@@ -48,9 +50,9 @@ namespace Extreal.Integration.Messaging.Redis
             {
                 await ioClient.ConnectAsync().ConfigureAwait(true);
             }
-            catch (ConnectionException)
+            finally
             {
-                throw;
+                getSocketInProgress = false;
             }
 
             return ioClient;
@@ -64,21 +66,25 @@ namespace Extreal.Integration.Messaging.Redis
                 return;
             }
 
-            socketStopInProgress = true;
+            stopSocketInProgress = true;
 
             cancellation.Cancel();
             cancellation.Dispose();
+            cancellation = new CancellationTokenSource();
 
             ioClient.OnDisconnected -= DisconnectEventHandler;
 
-            await ioClient.EmitAsync("leave");
+            if (ioClient.Connected)
+            {
+                await ioClient.EmitAsync("leave").ConfigureAwait(true);
+            }
 
-            await ioClient.DisconnectAsync();
+            await ioClient.DisconnectAsync().ConfigureAwait(true);
             ioClient.Dispose();
             ioClient = null;
             SetJoiningGroupStatus(false);
 
-            socketStopInProgress = false;
+            stopSocketInProgress = false;
         }
 
         protected override void DoReleaseManagedResources()
@@ -94,7 +100,7 @@ namespace Extreal.Integration.Messaging.Redis
             await (await GetSocketAsync()).EmitAsync(
                 "list groups",
                 response => groupList = response.GetValue<GroupListResponse>()
-            );
+            ).ConfigureAwait(true);
             await UniTask.WaitUntil(() => groupList != null, cancellationToken: cancellation.Token);
             return groupList;
         }
@@ -106,13 +112,13 @@ namespace Extreal.Integration.Messaging.Redis
                 "create group",
                 response => createGroupResponse = response.GetValue<CreateGroupResponse>(),
                 groupConfig.GroupName, groupConfig.MaxCapacity
-            );
+            ).ConfigureAwait(true);
             await UniTask.WaitUntil(() => createGroupResponse != null, cancellationToken: cancellation.Token);
             return createGroupResponse;
         }
 
         public override async UniTask DeleteGroupAsync(string groupName)
-            => await (await GetSocketAsync()).EmitAsync("delete group", groupName);
+            => await (await GetSocketAsync()).EmitAsync("delete group", _ => { }, groupName).ConfigureAwait(true);
 
         protected override async UniTask<string> DoJoinAsync(MessagingJoiningConfig connectionConfig, string localUserId)
         {
@@ -121,7 +127,7 @@ namespace Extreal.Integration.Messaging.Redis
                 "join",
                 response => message = response.GetValue<string>(),
                 localUserId, connectionConfig.GroupName
-            );
+            ).ConfigureAwait(true);
             await UniTask.WaitUntil(() => message != null, cancellationToken: cancellation.Token);
             return message;
         }
@@ -131,7 +137,7 @@ namespace Extreal.Integration.Messaging.Redis
 
         [SuppressMessage("Usage", "CC0021")]
         protected override async UniTask DoSendMessageAsync(Message message)
-            => await ioClient.EmitAsync("message", message);
+            => await ioClient.EmitAsync("message", message).ConfigureAwait(true);
 
         private void DisconnectEventHandler(object sender, string reason)
             => FireOnUnexpectedLeft(reason);

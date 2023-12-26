@@ -5,7 +5,7 @@ using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.Controls.TextChatControl
+namespace Extreal.Integration.Messaging.Redis.MVS.TextChatControl
 {
     public class TextChatControlView : MonoBehaviour
     {
