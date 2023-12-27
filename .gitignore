@@ -74,5 +74,5 @@ crashlytics-build.properties
 # npm
 WebScripts~/dist
 WebScripts~/node_modules
-RedisServer~/node_modules
+MessagingServer~/node_modules
 Samples~/MVS/WebGLScripts~/node_modules
