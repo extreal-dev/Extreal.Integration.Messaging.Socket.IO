@@ -20,6 +20,7 @@ namespace Extreal.Integration.Messaging.Redis
         {
             if (messagingConfig == null)
             {
+                // Not covered by testing but passed by peer review
                 throw new ArgumentNullException(nameof(messagingConfig));
             }
 

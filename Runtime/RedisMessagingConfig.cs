@@ -28,6 +28,7 @@ namespace Extreal.Integration.Messaging.Redis
         {
             if (string.IsNullOrEmpty(url))
             {
+                // Not covered by testing but passed by peer review
                 throw new ArgumentNullException(nameof(url));
             }
 

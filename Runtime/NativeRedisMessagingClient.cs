@@ -32,7 +32,6 @@ namespace Extreal.Integration.Messaging.Redis
                 {
                     return ioClient;
                 }
-                // Not covered by testing due to defensive implementation
                 await StopSocketAsync();
             }
 
@@ -62,7 +61,6 @@ namespace Extreal.Integration.Messaging.Redis
         {
             if (ioClient is null)
             {
-                // Not covered by testing due to defensive implementation
                 return;
             }
 
