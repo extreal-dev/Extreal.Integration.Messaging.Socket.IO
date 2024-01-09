@@ -19,11 +19,14 @@ namespace Extreal.Integration.Messaging.Redis
         private int status;
         private WebGLJoinResponse joinResponse;
 
+        [SuppressMessage("Usage", "CC0033")]
         private CancellationTokenSource cancellation = new CancellationTokenSource();
+        [SuppressMessage("Usage", "CC0033")]
         private readonly CompositeDisposable disposables = new CompositeDisposable();
 
         private readonly string instanceId;
         private static int instanceNum;
+        [SuppressMessage("Usage", "CC0033")]
         private static readonly CompositeDisposable StaticDisposables = new CompositeDisposable();
 
         [SuppressMessage("Usage", "CC0022")]

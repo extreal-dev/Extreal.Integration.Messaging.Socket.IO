@@ -12,7 +12,9 @@ namespace Extreal.Integration.Messaging.Redis
         private readonly RedisMessagingConfig redisMessagingConfig;
 
         private SocketIO ioClient;
+        [SuppressMessage("Usage", "CC0033")]
         private CancellationTokenSource cancellation = new CancellationTokenSource();
+        [SuppressMessage("Usage", "CC0033")]
         private readonly CancellationTokenSource cancellationForSocketInProgress = new CancellationTokenSource();
 
         private bool getSocketInProgress;
