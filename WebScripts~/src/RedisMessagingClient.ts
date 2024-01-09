@@ -61,7 +61,7 @@ class RedisMessagingClient {
     this.callbacks = callbacks;
   }
 
-  private getSocket = (handle: () => void) => {
+  private getSocket = (connectErrorHandle: () => void) => {
     if (this.socket !== null) {
       if (this.socket.connected) {
         return this.socket;
@@ -80,7 +80,7 @@ class RedisMessagingClient {
 
     this.socket.on("connect_error", () => {
       console.log("connect error");
-      handle();
+      connectErrorHandle();
       if (this.socket) {
         this.socket.disconnect();
         this.socket = null;
