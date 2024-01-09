@@ -3,19 +3,19 @@ using System;
 namespace Extreal.Integration.Messaging.Redis
 {
     /// <summary>
-    /// Class that provides RedisMessagingTransport.
+    /// Class that provides RedisMessagingClient.
     /// </summary>
     public static class RedisMessagingClientProvider
     {
         /// <summary>
-        /// Provides RedisMessagingTransport.
+        /// Provides RedisMessagingClient.
         /// </summary>
         /// <remarks>
-        /// Creates and returns a RedisMessagingTransport for Native (C#) or WebGL (JavaScript) depending on the platform.
+        /// Creates and returns a RedisMessagingClient for Native (C#) or WebGL (JavaScript) depending on the platform.
         /// </remarks>
         /// <param name="messagingConfig">Messaging config for Redis.</param>
         /// <exception cref="ArgumentNullException">When messagingConfig is null.</exception>
-        /// <returns>RedisMessagingTransport.</returns>
+        /// <returns>RedisMessagingClient.</returns>
         public static RedisMessagingClient Provide(RedisMessagingConfig messagingConfig)
         {
             if (messagingConfig == null)

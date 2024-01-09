@@ -8,7 +8,7 @@ using Extreal.Integration.Messaging.Common;
 namespace Extreal.Integration.Messaging.Redis
 {
     /// <summary>
-    /// Class that implement IMessagingTransport using Redis.
+    /// Class that implements MessagingClient using Redis.
     /// </summary>
     public abstract class RedisMessagingClient : MessagingClient
     {
