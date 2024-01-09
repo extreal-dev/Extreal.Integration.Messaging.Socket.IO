@@ -168,8 +168,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   parentReference:
-    TypeName: 
+    TypeName: Extreal.Integration.Chat.WebRTC.MVS.App.AppScope
   autoRun: 1
   autoInjectGameObjects: []
-  appConfig: {fileID: 11400000, guid: 1db807f7f1224324eab1d80f4b9cba67, type: 2}
   stageConfig: {fileID: 11400000, guid: d1b93e8ee48890443a2040ea71dba396, type: 2}

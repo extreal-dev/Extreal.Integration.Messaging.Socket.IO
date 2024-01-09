@@ -303,7 +303,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   parentReference:
-    TypeName: Extreal.Integration.Messaging.Redis.MVS.Controls.ClientControl.ClientControlScope
+    TypeName: Extreal.Integration.Messaging.Redis.MVS.App.AppScope
   autoRun: 1
   autoInjectGameObjects: []
   spaceControlView: {fileID: 1184468078}

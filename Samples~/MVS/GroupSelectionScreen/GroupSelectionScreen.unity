@@ -2952,7 +2952,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   parentReference:
-    TypeName: Extreal.Integration.Messaging.Redis.MVS.Controls.ClientControl.ClientControlScope
+    TypeName: Extreal.Integration.Messaging.Redis.MVS.ClientControl.ClientControlScope
   autoRun: 1
   autoInjectGameObjects: []
   groupSelectionScreenView: {fileID: 1207919082}
