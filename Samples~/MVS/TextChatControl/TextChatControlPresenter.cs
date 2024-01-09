@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using UniRx;
 using VContainer.Unity;
-using Extreal.Integration.Messaging.Common;
+using Extreal.Integration.Messaging;
 using Extreal.Core.StageNavigation;
 using Extreal.Integration.Messaging.Redis.MVS.App;
 using Cysharp.Threading.Tasks;

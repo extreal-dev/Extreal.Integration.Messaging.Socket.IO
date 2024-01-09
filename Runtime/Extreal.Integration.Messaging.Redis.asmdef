@@ -4,7 +4,7 @@
     "references": [
         "Extreal.Core.Logging",
         "Extreal.Core.Common",
-        "Extreal.Integration.Messaging.Common",
+        "Extreal.Integration.Messaging",
         "Extreal.Integration.Web.Common",
         "UniRx",
         "UniTask"

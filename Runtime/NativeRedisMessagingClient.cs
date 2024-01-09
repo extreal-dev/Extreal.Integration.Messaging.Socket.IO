@@ -2,7 +2,7 @@
 using Cysharp.Threading.Tasks;
 using System.Diagnostics.CodeAnalysis;
 using SocketIOClient;
-using Extreal.Integration.Messaging.Common;
+using Extreal.Integration.Messaging;
 using System.Threading;
 
 namespace Extreal.Integration.Messaging.Redis

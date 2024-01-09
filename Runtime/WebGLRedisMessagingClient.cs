@@ -1,7 +1,7 @@
 #if UNITY_WEBGL
 using Cysharp.Threading.Tasks;
 using System.Diagnostics.CodeAnalysis;
-using Extreal.Integration.Messaging.Common;
+using Extreal.Integration.Messaging;
 using Extreal.Integration.Web.Common;
 using AOT;
 using System;

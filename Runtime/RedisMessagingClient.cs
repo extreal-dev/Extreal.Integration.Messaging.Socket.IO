@@ -3,7 +3,7 @@ using Extreal.Core.Logging;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
-using Extreal.Integration.Messaging.Common;
+using Extreal.Integration.Messaging;
 
 namespace Extreal.Integration.Messaging.Redis
 {

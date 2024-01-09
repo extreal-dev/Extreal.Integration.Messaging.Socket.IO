@@ -17,7 +17,7 @@
         "Extreal.Core.Common",
         "Extreal.Integration.AssetWorkflow.Addressables",
         "Extreal.Integration.Web.Common",
-        "Extreal.Integration.Messaging.Common",
+        "Extreal.Integration.Messaging",
         "Extreal.Integration.Messaging.Redis"
     ],
     "includePlatforms": [

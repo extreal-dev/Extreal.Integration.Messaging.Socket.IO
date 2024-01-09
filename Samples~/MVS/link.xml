@@ -10,6 +10,6 @@
     <type fullname="Extreal.Core.StageNavigation.StageNavigator" preserve="all" />
   </assembly>
   <assembly fullname="Extreal.Integration.Web.Common" preserve="all" />
-  <assembly fullname="Extreal.Integration.Messaging.Common" preserve="all" />
+  <assembly fullname="Extreal.Integration.Messaging" preserve="all" />
   <assembly fullname="Extreal.Integration.Messaging.Redis" preserve="all" />
 </linker>
