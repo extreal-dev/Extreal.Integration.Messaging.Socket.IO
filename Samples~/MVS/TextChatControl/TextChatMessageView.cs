@@ -37,9 +37,8 @@ namespace Extreal.Integration.Messaging.Redis.MVS.TextChatControl
             var lifetime = (canvasWidth + messageText.preferredWidth) / velocity;
 
             var rectTransform = GetComponent<RectTransform>();
-            var sizeDelta = new Vector2(messageText.preferredWidth, messageText.preferredHeight);
-            sizeDelta = new Vector2(sizeDelta.x, messageText.preferredHeight);
-            rectTransform.sizeDelta = sizeDelta;
+            rectTransform.sizeDelta = new Vector2(messageText.preferredWidth, messageText.preferredHeight);
+            rectTransform.sizeDelta = new Vector2(rectTransform.sizeDelta.x, messageText.preferredHeight);
 
             if ((Random.Range(0, 10) & 1) == 0)
             {
