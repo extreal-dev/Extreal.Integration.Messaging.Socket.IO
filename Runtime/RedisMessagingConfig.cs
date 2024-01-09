@@ -9,7 +9,7 @@ namespace Extreal.Integration.Messaging.Redis
     public class RedisMessagingConfig
     {
         /// <summary>
-        /// URL of the redis server.
+        /// URL of the messaging server.
         /// </summary>
         public string Url { get; }
 
@@ -21,7 +21,7 @@ namespace Extreal.Integration.Messaging.Redis
         /// <summary>
         /// Creates a new redis messaging configuration.
         /// </summary>
-        /// <param name="url">URL of the redis server.</param>
+        /// <param name="url">URL of the messaging server.</param>
         /// <param name="socketIOOptions">Socket.IO options.</param>
         /// <exception cref="ArgumentNullException">When url is null.</exception>
         public RedisMessagingConfig(string url, SocketIOOptions socketIOOptions = default)
