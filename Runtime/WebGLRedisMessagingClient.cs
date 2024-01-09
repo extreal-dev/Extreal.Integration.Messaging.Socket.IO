@@ -233,8 +233,9 @@ namespace Extreal.Integration.Messaging.Redis
             instanceNum--;
             if (instanceNum == 0)
             {
-                disposables.Dispose();
+                StaticDisposables.Dispose();
             }
+            disposables.Dispose();
         }
 
         private void StopSocket()
