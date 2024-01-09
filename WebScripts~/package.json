@@ -1,6 +1,6 @@
 {
   "name": "@extreal-dev/extreal.integration.messaging.redis",
-  "version": "1.0.0-Next.1",
+  "version": "1.0.0-next.1",
   "scripts": {
     "dev": "rollup --config rollup.config.ts --configPlugin typescript",
     "prod": "rollup --config rollup.config.ts --configPlugin typescript --environment BUILD:production"
