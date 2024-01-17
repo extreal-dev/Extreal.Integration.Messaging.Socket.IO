@@ -5,7 +5,7 @@ import "dotenv/config";
 
 import { Server, Socket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
-import { createClient } from "redis";
+import { createClient , RedisClientType } from "redis";
 
 const appPort = Number(process.env.APP_PORT) || 3030;
 const apiPort = Number(process.env.API_PORT) || 3031;
@@ -16,6 +16,48 @@ const isLogging = process.env.LOGGING === "on";
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+class RedisClient {
+  private client: RedisClientType;
+
+  constructor(url: string) {
+    this.client = createClient({ url });
+    this.client.on('error', (err) => console.error('Redis Client Error:', err));
+  }
+
+  async connect() {
+    await this.client.connect();
+  }
+
+  async getGroupList(): Promise<Map<string, string>> {
+    const groupListStr = await this.client.get("GroupList");
+    if (groupListStr) {
+      return new Map<string, string>(Object.entries(JSON.parse(groupListStr)));
+    }
+    return new Map();
+  }
+
+  async setGroupList(groupList: Map<string, string>): Promise<void> {
+    await this.client.set("GroupList", JSON.stringify(Object.fromEntries(groupList)));
+  }
+
+  async getMaxCapacity(groupName: string): Promise<number | null> {
+    const maxCapacityStr = await this.client.get(`MaxCapacity#${groupName}`);
+    return maxCapacityStr ? parseInt(maxCapacityStr, 10) : null;
+  }
+
+  async setMaxCapacity(groupName: string, maxCapacity: number): Promise<void> {
+    await this.client.set(`MaxCapacity#${groupName}`, maxCapacity.toString());
+  }
+
+  async getUserSocketId(userId: string): Promise<string | null> {
+    return await this.client.get(userId);
+  }
+
+  async setUserSocketId(userId: string, socketId: string): Promise<void> {
+    await this.client.set(userId, socketId);
+  }
+}
 
 type Message = {
   from: string;
@@ -69,7 +111,7 @@ subClient.on("error", (err) => {
 });
 io.adapter(createAdapter(pubClient, subClient)); // redis-adapter
 
-const rooms = (): Map<string, Set<string>> => {
+const activeGroups = (): Map<string, Set<string>> => {
   // @ts-ignore See https://socket.io/docs/v4/rooms/#implementation-details
   return io.sockets.adapter.rooms;
 };
@@ -79,29 +121,7 @@ io.on("connection", async (socket: Socket) => {
   let myUserId = "";
 
   const getGroupList = async () => {
-    const newGroupList = new Map<string, string>();
-    const groupListStr = await redisClient.get("GroupList");
-    if (groupListStr) {
-      const groupList = new Map<string, string>(
-        Object.entries(JSON.parse(groupListStr))
-      );
-      if (isLogging) {
-        console.log(groupListStr);
-        console.log(groupList);
-      }
-      groupList.forEach((value, key) => {
-        if (rooms().get(key)) {
-          // edis.roomのtestに人がなく、rooms().get(key)がfalseで
-          newGroupList.set(key, value);
-        }
-      });
-      //　ここで上書きされないように修正
-      await redisClient.set(
-        "GroupList",
-        JSON.stringify(Object.fromEntries(newGroupList))
-      );
-    }
-    return newGroupList;
+    return await redisClient.getGroupList();
   };
 
   socket.on(
@@ -140,13 +160,10 @@ io.on("connection", async (socket: Socket) => {
         console.log(groupList);
         console.log(JSON.stringify(Object.fromEntries(groupList)));
       }
-      await redisClient.set(
-        "GroupList",
-        JSON.stringify(Object.fromEntries(groupList))
-      );
+      await redisClient.setGroupList(groupList);
 
       if (maxCapacity) {
-        await redisClient.set(`MaxCapacity#${groupName}`, maxCapacity);
+        await redisClient.setMaxCapacity(groupName, maxCapacity);
       }
 
       const message = `Group have been created. groupName: ${groupName}`;
@@ -158,6 +175,7 @@ io.on("connection", async (socket: Socket) => {
     "delete group",
     async (groupName: string, callback: (response: number) => void) => {
       socket.to(groupName).emit("delete group");
+
       callback(200);
     }
   );
@@ -172,13 +190,10 @@ io.on("connection", async (socket: Socket) => {
       myGroupName = groupName;
       myUserId = userId;
 
-      const maxCapacityStr = await redisClient.get(
-        `MaxCapacity#${myGroupName}`
-      );
-      if (maxCapacityStr) {
-        const maxCapacity = Number.parseInt(maxCapacityStr);
-        const connectedClientNum = rooms().get(myGroupName)?.size as number;
-        if (connectedClientNum >= maxCapacity) {
+      const maxCapacity = await redisClient.getMaxCapacity(groupName);
+      if (maxCapacity) {
+        const connectedClientNum = activeGroups().get(myGroupName)?.size as number;
+        if (maxCapacity !== null && connectedClientNum >= maxCapacity) {
           if (isLogging) {
             console.log(`Reject user: ${myUserId}`);
           }
@@ -191,7 +206,7 @@ io.on("connection", async (socket: Socket) => {
       if (isLogging) {
         console.log(`join: userId=${myUserId}, groupName=${myGroupName}`);
       }
-      await redisClient.set(myUserId, socket.id.toString());
+      await redisClient.setUserSocketId(userId, socket.id.toString());
       await socket.join(myGroupName);
       socket.to(myGroupName).emit("user joined", myUserId);
     }
@@ -200,7 +215,7 @@ io.on("connection", async (socket: Socket) => {
   socket.on("message", async (message: Message) => {
     message.from = myUserId;
     if (message.to) {
-      const socketId = await redisClient.get(message.to);
+      const socketId = await redisClient.getUserSocketId(message.to);
       if (socketId) {
         socket.to(socketId).emit("message", message);
       }
@@ -223,6 +238,19 @@ io.on("connection", async (socket: Socket) => {
 
       myGroupName = "";
     }
+    const groupList = await getGroupList();
+    groupList.forEach((_, key) => {
+      const group = activeGroups().get(key);
+      const groupUserNum = group ? group.size : 0;
+      if (isLogging) {
+        console.log(`group: ${key}`, `group size: ${groupUserNum}`)
+      }
+      if (groupUserNum === 0) {
+        groupList.delete(key);
+      }
+    });
+    
+    await redisClient.setGroupList(groupList);
   };
 
   socket.on("leave", handleDisconnect);
@@ -234,10 +262,7 @@ io.on("connection", async (socket: Socket) => {
     handleDisconnect();
   });
 
-  const redisClient = createClient({ url: redisUrl }).on("error", (err) => {
-    console.error("Redis Client Error:%o", err);
-    process.exit(1);
-  });
+  const redisClient = new RedisClient(redisUrl);
 
   await redisClient.connect();
   if (isLogging) {
