@@ -30,9 +30,9 @@ class RedisClient {
   }
 
   async getGroupList(): Promise<Map<string, string>> {
-    const groupListStr = await this.client.get("GroupList");
-    if (groupListStr) {
-      return new Map<string, string>(Object.entries(JSON.parse(groupListStr)));
+    const activeGroups = await this.client.get("GroupList");
+    if (activeGroups) {
+      return new Map<string, string>(Object.entries(JSON.parse(activeGroups)));
     }
     return new Map();
   }
