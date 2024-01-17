@@ -6,7 +6,6 @@ import "dotenv/config";
 import { Server, Socket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { createClient } from "redis";
-import * as promClient from "prom-client";
 
 const appPort = Number(process.env.APP_PORT) || 3030;
 const apiPort = Number(process.env.API_PORT) || 3031;
@@ -14,25 +13,9 @@ const redisHost = process.env.REDIS_HOST || "localhost";
 const redisPort = Number(process.env.REDIS_PORT) || 7379;
 const isLogging = process.env.LOGGING === "on";
 
-// const promClient = require('prom-client');
-const register = new promClient.Registry();
-// - Default metrics are collected on scrape of metrics endpoint, not on an
-//  interval. The `timeout` option to `collectDefaultMetrics(conf)` is no longer
-//  supported or needed, and the function no longer returns a `Timeout` object.
-promClient.collectDefaultMetrics({ register: register });
-
 const app = express();
 app.use(express.json());
-// CROS対応
 app.use(cors());
-app.get("/", (req, res) => {
-  res.send("OK");
-});
-app.get("/metrics", async (req, res) => {
-  res.setHeader("Content-Type", register.contentType);
-  const metrics = await register.metrics();
-  res.send(metrics);
-});
 
 type Message = {
   from: string;
@@ -102,13 +85,17 @@ io.on("connection", async (socket: Socket) => {
       const groupList = new Map<string, string>(
         Object.entries(JSON.parse(groupListStr))
       );
-      console.log(groupListStr);
-      console.log(groupList);
+      if (isLogging) {
+        console.log(groupListStr);
+        console.log(groupList);
+      }
       groupList.forEach((value, key) => {
         if (rooms().get(key)) {
+          // edis.roomのtestに人がなく、rooms().get(key)がfalseで
           newGroupList.set(key, value);
         }
       });
+      //　ここで上書きされないように修正
       await redisClient.set(
         "GroupList",
         JSON.stringify(Object.fromEntries(newGroupList))
@@ -149,8 +136,10 @@ io.on("connection", async (socket: Socket) => {
         return;
       }
       groupList.set(groupName, socket.id.toString());
-      console.log(groupList);
-      console.log(JSON.stringify(Object.fromEntries(groupList)));
+      if (isLogging) {
+        console.log(groupList);
+        console.log(JSON.stringify(Object.fromEntries(groupList)));
+      }
       await redisClient.set(
         "GroupList",
         JSON.stringify(Object.fromEntries(groupList))
