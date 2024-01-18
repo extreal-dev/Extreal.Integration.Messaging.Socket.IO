@@ -77,6 +77,7 @@ namespace Extreal.Integration.Messaging.Redis.MVS.TextChatControl
                 try
                 {
                     await redisMessagingClient.DeleteGroupAsync(appState.GroupName);
+                    await redisMessagingClient.LeaveAsync();
                 }
                 catch (Exception e)
                 {
