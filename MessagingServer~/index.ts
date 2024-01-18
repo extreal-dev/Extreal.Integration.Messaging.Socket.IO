@@ -1,21 +1,10 @@
-import express from "express";
-import { createServer } from "http";
-import cors from "cors";
-import "dotenv/config";
-
-import { Server, Socket } from "socket.io";
-import { createAdapter } from "@socket.io/redis-adapter";
-import { createClient , RedisClientType } from "redis";
-
-const appPort = Number(process.env.APP_PORT) || 3030;
-const apiPort = Number(process.env.API_PORT) || 3031;
-const redisHost = process.env.REDIS_HOST || "localhost";
-const redisPort = Number(process.env.REDIS_PORT) || 7379;
-const isLogging = process.env.LOGGING === "on";
-
-const app = express();
-app.use(express.json());
-app.use(cors());
+import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
+import { createRedisAdapter, createRedisClient, Server, Socket } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
+import { createClient, RedisClientType } from "npm:redis@^4.5";
+const appPort = 3030;
+const redisHost = "messaging-redis";
+const redisPort = 6379;
+const isLogging = Deno.env.get("MESSAGING_LOGGING")?.toLowerCase() === "on";
 
 class RedisClient {
   private client: RedisClientType;
@@ -84,36 +73,33 @@ const log = (logMessage: string | object) => {
   }
 };
 
-const httpServer = createServer(app);
+const corsConfig = {
+  origin: Deno.env.get("MESSAGING_CORS_ORIGIN"),
+};
 
-const io = new Server(httpServer, {
-  allowEIO3: true,
-  cors: {
-    origin: "*",
-  },
+const [pubClient, subClient] = await Promise.all([
+  createRedisClient({
+      hostname: redisHost,
+      port: 6379
+  }),
+  createRedisClient({
+      hostname: redisHost,
+      port: 6379
+  }),
+]);
+
+const io = new Server( {
+  cors: corsConfig,
+  adapter: createRedisAdapter(pubClient, subClient),
 });
+
+const adapter = io.of("/").adapter;
 
 const redisUrl = `redis://${redisHost}:${redisPort}`;
-const pubClient = createClient({ url: redisUrl }).on("error", (err) => {
-  console.error("Redis pubClient Error:%o", err);
-  process.exit(1);
-});
-app.listen(apiPort, () => {
-  if (isLogging) {
-    console.log(`Start on port ${apiPort}`);
-  }
-});
-const subClient = pubClient.duplicate();
-subClient.on("error", (err) => {
-  if (isLogging) {
-    console.log("Redis subClient Error", err);
-  }
-});
-io.adapter(createAdapter(pubClient, subClient)); // redis-adapter
 
 const activeGroups = (): Map<string, Set<string>> => {
   // @ts-ignore See https://socket.io/docs/v4/rooms/#implementation-details
-  return io.sockets.adapter.rooms;
+  return adapter.rooms;
 };
 
 io.on("connection", async (socket: Socket) => {
@@ -263,26 +249,20 @@ io.on("connection", async (socket: Socket) => {
   });
 
   const redisClient = new RedisClient(redisUrl);
-
   await redisClient.connect();
   if (isLogging) {
     console.log(`worker: connected id: ${socket.id}`);
   }
 });
 
-Promise.all([pubClient.connect(), subClient.connect()])
-  .then(() => {
-    io.adapter(createAdapter(pubClient, subClient));
-    io.listen(appPort);
-  })
-  .catch((err) => {
-    console.error("Socket.io Listen Error: %o", err);
-  })
-  .finally(() => {
-    if (isLogging) {
-      console.log(`Socket.io Listen: ${appPort}`);
-      console.log(
-        "=================================Restarted======================================"
-      );
-    }
+try {
+  await serve(io.handler(), {
+    port: appPort,
   });
+  console.log(
+    "=================================Restarted======================================"
+  );
+} catch (error) {
+  console.error('start server error:', error);
+}
+

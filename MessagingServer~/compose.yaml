@@ -4,10 +4,10 @@ services:
         container_name: messaging-redis
         restart: always
         expose:
-            - '${REDIS_PORT:-6379}'
+            - 6379
         tty: true
     messaging:
-        build: .
+        image: denoland/deno:alpine-1.34.3
         container_name: messaging
         init: true
         restart: always
@@ -16,9 +16,15 @@ services:
         ports:
          - 3030:3030
         expose:
-            - ${APP_PORT:-3030}
-            - ${API_PORT:-3031}
-            - ${REDIS_HOST:-localhost}
-            - ${REDIS_PORT:-6379}
+            - 3030
         depends_on:
             - messaging-redis
+        environment:
+            # If "on" is logging, otherwise is not. In production, set it to "off".
+            MESSAGING_LOGGING: ${MESSAGING_LOGGING:-on}
+            # In production, change it to suit the environment.
+            MESSAGING_CORS_ORIGIN: ${MESSAGING_CORS_ORIGIN:-*}
+        working_dir: /app
+        volumes:
+        - .:/app
+        entrypoint: ["deno", "run", "--allow-env", "--allow-net", "index.ts"]
