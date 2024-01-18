@@ -12,7 +12,6 @@ services:
         init: true
         restart: always
         tty: true
-        env_file: ${PWD}/.env
         ports:
          - 3030:3030
         expose:
