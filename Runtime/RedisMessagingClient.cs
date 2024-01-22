@@ -20,9 +20,9 @@ namespace Extreal.Integration.Messaging.Redis
             {
                 Logger.LogDebug($"Join: GroupName={joiningConfig.GroupName}");
             }
-            var localUserId = Guid.NewGuid().ToString();
+            var localClientId = Guid.NewGuid().ToString();
 
-            var message = await DoJoinAsync(joiningConfig, localUserId);
+            var message = await DoJoinAsync(joiningConfig, localClientId);
 
             if (message == "rejected")
             {
@@ -31,10 +31,10 @@ namespace Extreal.Integration.Messaging.Redis
             }
 
             SetJoiningGroupStatus(true);
-            FireOnJoined(localUserId);
+            FireOnJoined(localClientId);
         }
 
-        protected abstract UniTask<string> DoJoinAsync(MessagingJoiningConfig connectionConfig, string localUserId);
+        protected abstract UniTask<string> DoJoinAsync(MessagingJoiningConfig connectionConfig, string localClientId);
 
         protected sealed override async UniTask DoSendMessageAsync(string message, string to)
         {

@@ -18,8 +18,8 @@ class RedisMessagingAdapter {
           onLeaving: (reason) => callback(this.withPrefix("HandleOnLeaving"), reason, instanceId),
           onUnexpectedLeft: (reason) =>
             callback(this.withPrefix("HandleOnUnexpectedLeft"), reason, instanceId),
-          onUserJoined: (userId) => callback(this.withPrefix("HandleOnUserJoined"), userId, instanceId),
-          onUserLeaving: (userId) => callback(this.withPrefix("HandleOnUserLeaving"), userId, instanceId),
+          onClientJoined: (clientId) => callback(this.withPrefix("HandleOnClientJoined"), clientId, instanceId),
+          onClientLeaving: (clientId) => callback(this.withPrefix("HandleOnClientLeaving"), clientId, instanceId),
           onMessageReceived: (message) =>
             callback(this.withPrefix("HandleOnMessageReceived"), JSON.stringify(message), instanceId),
           stopSocket: () => callback(this.withPrefix("StopSocket"), instanceId),
@@ -40,7 +40,7 @@ class RedisMessagingAdapter {
 
     addAction(this.withPrefix("DoJoinAsync"), (joiningConfigStr, instanceId) => {
       const joiningConfig = JSON.parse(joiningConfigStr);
-      this.getRedisMessagingClient(instanceId).join(joiningConfig.userId, joiningConfig.groupName, joiningConfig.maxCapacity, (response) =>
+      this.getRedisMessagingClient(instanceId).join(joiningConfig.clientId, joiningConfig.groupName, joiningConfig.maxCapacity, (response) =>
         callback(this.withPrefix("ReceiveJoinResponse"), JSON.stringify(response), instanceId),
       );
     });

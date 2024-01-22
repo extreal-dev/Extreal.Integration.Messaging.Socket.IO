@@ -30,12 +30,12 @@ class RedisClient {
     await this.client.set(`MaxCapacity#${groupName}`, maxCapacity.toString());
   }
 
-  async getUserSocketId(userId: string): Promise<string | null> {
-    return await this.client.get(userId);
+  async getClientSocketId(clientId: string): Promise<string | null> {
+    return await this.client.get(clientId);
   }
 
-  async setUserSocketId(userId: string, socketId: string): Promise<void> {
-    await this.client.set(userId, socketId);
+  async setClientSocketId(clientId: string, socketId: string): Promise<void> {
+    await this.client.set(clientId, socketId);
   }
 }
 
@@ -99,7 +99,7 @@ const getGroupsInfo = (): { groupList: Map<string, string>, groupMembers: Map<st
 
 io.on("connection", async (socket: Socket) => {
   let myGroupName = "";
-  let myUserId = "";
+  let myClientId = "";
   let myGroupMaxCapacity = 0;
 
   socket.on(
@@ -118,13 +118,13 @@ io.on("connection", async (socket: Socket) => {
   socket.on(
     "join",
     async (
-      userId: string,
+      clientId: string,
       groupName: string,
       maxCapacity: number,
       callback: (response: string) => void
     ) => {
       myGroupName = groupName;
-      myUserId = userId;
+      myClientId = clientId;
       myGroupMaxCapacity = maxCapacity;
 
       if (maxCapacity) {
@@ -135,24 +135,24 @@ io.on("connection", async (socket: Socket) => {
       if (groupMaxCapacity) {
         const connectedClientNum = getGroupsInfo().groupMembers.get(myGroupName)?.length as number;
         if (groupMaxCapacity !== null && connectedClientNum >= groupMaxCapacity) {
-          log(`Reject user: ${myUserId}`);
+          log(`Reject client: ${myClientId}`);
           callback("rejected");
           return;
         }
       }
 
       callback("approved");
-      log(`join: userId=${myUserId}, groupName=${myGroupName}`);     
-      await redisClient.setUserSocketId(userId, socket.id.toString());
+      log(`join: clientId=${myClientId}, groupName=${myGroupName}`);     
+      await redisClient.setClientSocketId(clientId, socket.id.toString());
       await socket.join(myGroupName);
-      socket.to(myGroupName).emit("user joined", myUserId);
+      socket.to(myGroupName).emit("client joined", myClientId);
     }
   );
 
   socket.on("message", async (message: Message) => {
-    message.from = myUserId;
+    message.from = myClientId;
     if (message.to) {
-      const socketId = await redisClient.getUserSocketId(message.to);
+      const socketId = await redisClient.getClientSocketId(message.to);
       if (socketId) {
         socket.to(socketId).emit("message", message);
       }
@@ -160,14 +160,14 @@ io.on("connection", async (socket: Socket) => {
     }
     if (myGroupName) {
       socket.to(myGroupName).emit("message", message);
-      log(`msg received: userId=${message.from}, groupName=${myGroupName}`);
+      log(`msg received: clientId=${message.from}, groupName=${myGroupName}`);
     }
   });
 
   const handleDisconnect = async () => {
     if (myGroupName) {
-      log(`user leaving: userId=${myUserId}, groupName=${myGroupName}`);
-      socket.to(myGroupName).emit("user leaving", myUserId);
+      log(`client leaving: clientId=${myClientId}, groupName=${myGroupName}`);
+      socket.to(myGroupName).emit("client leaving", myClientId);
       socket.leave(myGroupName);
       myGroupName = "";
     }

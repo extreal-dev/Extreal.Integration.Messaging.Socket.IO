@@ -30,8 +30,8 @@ type RedisMessagingClientCallbacks = {
   setJoiningGroupStatus: (isJoinedGroup: string) => void;
   onLeaving: (reason: string) => void;
   onUnexpectedLeft: (reason: string) => void;
-  onUserJoined: (userId: string) => void;
-  onUserLeaving: (userId: string) => void;
+  onClientJoined: (clientId: string) => void;
+  onClientLeaving: (clientId: string) => void;
   onMessageReceived: (message: Message) => void;
   stopSocket: () => void;
 };
@@ -63,8 +63,8 @@ class RedisMessagingClient {
     this.socket = socket;
 
     this.socket.on("disconnect", this.receiveDisconnect);
-    this.socket.on("user joined", this.receiveUserJoined);
-    this.socket.on("user leaving", this.receiveUserLeaving);
+    this.socket.on("client joined", this.receiveClientJoined);
+    this.socket.on("client leaving", this.receiveClientLeaving);
     this.socket.on("message", this.receiveMessageAsync);
 
     this.socket.on("connect_error", () => {
@@ -115,12 +115,12 @@ class RedisMessagingClient {
     });
   };
 
-  public join = (userId: string, groupName: string, maxCapacity: number, handle: (response: WebGLJoinResponse) => void) => {
+  public join = (clientId: string, groupName: string, maxCapacity: number, handle: (response: WebGLJoinResponse) => void) => {
     const returnError = () => {
       const ret: WebGLJoinResponse = { status: 504, message: "connect error" };
       handle(ret);
     }
-    this.getSocket(returnError).emit("join", userId, groupName, maxCapacity, (response: string) => {
+    this.getSocket(returnError).emit("join", clientId, groupName, maxCapacity, (response: string) => {
       if (this.isDebug) {
         console.log(response);
       }
@@ -151,18 +151,18 @@ class RedisMessagingClient {
     this.stopSocket();
   };
 
-  private receiveUserJoined = (userId: string) => {
+  private receiveClientJoined = (clientId: string) => {
     if (this.isDebug) {
-      console.log(`Receive user joined: ${userId}`);
+      console.log(`Receive client joined: ${clientId}`);
     }
-    this.callbacks.onUserJoined(userId);
+    this.callbacks.onClientJoined(clientId);
   };
 
-  private receiveUserLeaving = (userId: string) => {
+  private receiveClientLeaving = (clientId: string) => {
     if (this.isDebug) {
-      console.log(`Receive user leaving: ${userId}`);
+      console.log(`Receive client leaving: ${clientId}`);
     }
-    this.callbacks.onUserLeaving(userId);
+    this.callbacks.onClientLeaving(clientId);
   };
 
   private receiveMessageAsync = async (message: Message) => {

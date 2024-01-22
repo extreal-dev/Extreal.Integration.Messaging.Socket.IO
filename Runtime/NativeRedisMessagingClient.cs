@@ -42,8 +42,8 @@ namespace Extreal.Integration.Messaging.Redis
             ioClient = new SocketIO(redisMessagingConfig.Url, redisMessagingConfig.SocketIOOptions);
 
             ioClient.OnDisconnected += DisconnectEventHandler;
-            ioClient.On("user joined", UserJoinedEventHandler);
-            ioClient.On("user leaving", UserLeavingEventHandler);
+            ioClient.On("client joined", ClientJoinedEventHandler);
+            ioClient.On("client leaving", ClientLeavingEventHandler);
             ioClient.On("message", MessageReceivedEventHandler);
 
             try
@@ -62,6 +62,7 @@ namespace Extreal.Integration.Messaging.Redis
         {
             if (ioClient is null)
             {
+                // Not covered by testing due to defensive implementation
                 return;
             }
 
@@ -104,13 +105,13 @@ namespace Extreal.Integration.Messaging.Redis
             return groupList;
         }
 
-        protected override async UniTask<string> DoJoinAsync(MessagingJoiningConfig connectionConfig, string localUserId)
+        protected override async UniTask<string> DoJoinAsync(MessagingJoiningConfig connectionConfig, string localClientId)
         {
             var message = default(string);
             await (await GetSocketAsync()).EmitAsync(
                 "join",
                 response => message = response.GetValue<string>(),
-                localUserId, connectionConfig.GroupName, connectionConfig.MaxCapacity
+                localClientId, connectionConfig.GroupName, connectionConfig.MaxCapacity
             ).ConfigureAwait(true);
             await UniTask.WaitUntil(() => message != null, cancellationToken: cancellation.Token);
             return message;
@@ -126,16 +127,16 @@ namespace Extreal.Integration.Messaging.Redis
         private void DisconnectEventHandler(object sender, string reason)
             => FireOnUnexpectedLeft(reason);
 
-        private void UserJoinedEventHandler(SocketIOResponse response)
+        private void ClientJoinedEventHandler(SocketIOResponse response)
         {
-            var connectedUserId = response.GetValue<string>();
-            FireOnUserJoined(connectedUserId);
+            var connectedClientId = response.GetValue<string>();
+            FireOnClientJoined(connectedClientId);
         }
 
-        private void UserLeavingEventHandler(SocketIOResponse response)
+        private void ClientLeavingEventHandler(SocketIOResponse response)
         {
-            var disconnectingUserId = response.GetValue<string>();
-            FireOnUserLeaving(disconnectingUserId);
+            var disconnectingClientId = response.GetValue<string>();
+            FireOnClientLeaving(disconnectingClientId);
         }
 
         private void MessageReceivedEventHandler(SocketIOResponse response)

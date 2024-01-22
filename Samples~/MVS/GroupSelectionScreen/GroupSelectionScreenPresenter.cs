@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using Extreal.Core.StageNavigation;
@@ -16,11 +17,11 @@ namespace Extreal.Integration.Messaging.Redis.MVS.GroupSelectionScreen
         (
             StageNavigator<StageName, SceneName> stageNavigator,
             AppState appState,
-            RedisMessagingClient redisMessagingClient,
+            List<RedisMessagingClient> clients,
             GroupSelectionScreenView groupSelectionScreenView
         ) : base(stageNavigator, appState)
         {
-            this.redisMessagingClient = redisMessagingClient;
+            redisMessagingClient = clients.First();
             this.groupSelectionScreenView = groupSelectionScreenView;
         }
 

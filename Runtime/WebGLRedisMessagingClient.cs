@@ -41,8 +41,8 @@ namespace Extreal.Integration.Messaging.Redis
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleJoiningGroupStatus)), HandleJoiningGroupStatus);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnLeaving)), HandleOnLeaving);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnUnexpectedLeft)), HandleOnUnexpectedLeft);
-            WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnUserJoined)), HandleOnUserJoined);
-            WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnUserLeaving)), HandleOnUserLeaving);
+            WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnClientJoined)), HandleOnClientJoined);
+            WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnClientLeaving)), HandleOnClientLeaving);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnMessageReceived)), HandleOnMessageReceived);
             WebGLHelper.AddCallback(WithPrefix(nameof(StopSocket)), StopSocket);
         }
@@ -69,12 +69,12 @@ namespace Extreal.Integration.Messaging.Redis
             => instances[instanceId].FireOnUnexpectedLeft(reason);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void HandleOnUserJoined(string userId, string instanceId)
-            => instances[instanceId].FireOnUserJoined(userId);
+        private static void HandleOnClientJoined(string clientId, string instanceId)
+            => instances[instanceId].FireOnClientJoined(clientId);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void HandleOnUserLeaving(string userId, string instanceId)
-            => instances[instanceId].FireOnUserLeaving(userId);
+        private static void HandleOnClientLeaving(string clientId, string instanceId)
+            => instances[instanceId].FireOnClientLeaving(clientId);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void HandleOnMessageReceived(string message, string instanceId)
@@ -113,9 +113,9 @@ namespace Extreal.Integration.Messaging.Redis
             return result.GroupListResponse;
         }
 
-        protected override async UniTask<string> DoJoinAsync(MessagingJoiningConfig connectionConfig, string localUserId)
+        protected override async UniTask<string> DoJoinAsync(MessagingJoiningConfig connectionConfig, string localClientId)
         {
-            WebGLHelper.CallAction(WithPrefix(nameof(DoJoinAsync)), JsonJoiningConfig.ToJson(localUserId, connectionConfig.GroupName, connectionConfig.MaxCapacity), instanceId);
+            WebGLHelper.CallAction(WithPrefix(nameof(DoJoinAsync)), JsonJoiningConfig.ToJson(localClientId, connectionConfig.GroupName, connectionConfig.MaxCapacity), instanceId);
             await UniTask.WaitUntil(() => joinResponse != null, cancellationToken: cancellation.Token);
 
             var result = joinResponse;
@@ -186,8 +186,8 @@ namespace Extreal.Integration.Messaging.Redis
     [SuppressMessage("Usage", "CC0047")]
     public class JsonJoiningConfig
     {
-        [JsonPropertyName("userId")]
-        public string UserId { get; set; }
+        [JsonPropertyName("clientId")]
+        public string ClientId { get; set; }
 
         [JsonPropertyName("groupName")]
         public string GroupName { get; set; }
@@ -195,11 +195,11 @@ namespace Extreal.Integration.Messaging.Redis
         [JsonPropertyName("maxCapacity")]
         public int MaxCapacity { get; set; }
 
-        public static string ToJson(string userId, string groupName, int maxCapacity)
+        public static string ToJson(string clientId, string groupName, int maxCapacity)
         {
             var jsonJoiningConfig = new JsonJoiningConfig
             {
-                UserId = userId,
+                ClientId = clientId,
                 GroupName = groupName,
                 MaxCapacity = maxCapacity
             };
@@ -210,8 +210,8 @@ namespace Extreal.Integration.Messaging.Redis
     [SuppressMessage("Usage", "CC0047")]
     public class JsonMessageContent
     {
-        [JsonPropertyName("userId")]
-        public string UserId { get; set; }
+        [JsonPropertyName("clientId")]
+        public string ClientId { get; set; }
 
         [JsonPropertyName("message")]
         public string Message { get; set; }
