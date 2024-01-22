@@ -15,16 +15,6 @@ type GroupListResponse = {
   groups: Array<{ id: string; name: string }>;
 };
 
-type WebGLCreateGroupResponse = {
-  status: number;
-  createGroupResponse: CreateGroupResponse;
-}
-
-type CreateGroupResponse = {
-  status: number;
-  message: string;
-};
-
 type WebGLJoinResponse = {
   status: number;
   message: string;
@@ -73,7 +63,6 @@ class RedisMessagingClient {
     this.socket = socket;
 
     this.socket.on("disconnect", this.receiveDisconnect);
-    this.socket.on("delete group", this.receiveDeleteGroup);
     this.socket.on("user joined", this.receiveUserJoined);
     this.socket.on("user leaving", this.receiveUserLeaving);
     this.socket.on("message", this.receiveMessageAsync);
@@ -126,33 +115,12 @@ class RedisMessagingClient {
     });
   };
 
-  public createGroup = (groupName: string, maxCapacity: number, handle: (response: WebGLCreateGroupResponse) => void) => {
-    const returnError = () => {
-      const ret: WebGLCreateGroupResponse = { status: 504, createGroupResponse: { status: 504, message: "connect error" } };
-      handle(ret);
-    }
-    this.getSocket(returnError).emit("create group", groupName, maxCapacity, (response: CreateGroupResponse) => {
-      if (this.isDebug) {
-        console.log(response);
-      }
-      const ret: WebGLCreateGroupResponse = { status: 200, createGroupResponse: response };
-      handle(ret);
-    });
-  };
-
-  public deleteGroup = (groupName: string, handle: (response: number) => void) => {
-    const returnError = () => handle(504);
-    this.getSocket(returnError).emit("delete group", groupName, (response: number) => {
-      handle(response);
-    });
-  };
-
-  public join = (userId: string, groupName: string, handle: (response: WebGLJoinResponse) => void) => {
+  public join = (userId: string, groupName: string, maxCapacity: number, handle: (response: WebGLJoinResponse) => void) => {
     const returnError = () => {
       const ret: WebGLJoinResponse = { status: 504, message: "connect error" };
       handle(ret);
     }
-    this.getSocket(returnError).emit("join", userId, groupName, (response: string) => {
+    this.getSocket(returnError).emit("join", userId, groupName, maxCapacity, (response: string) => {
       if (this.isDebug) {
         console.log(response);
       }

@@ -38,24 +38,9 @@ class RedisMessagingAdapter {
       ),
     );
 
-    addAction(this.withPrefix("DoCreateGroupAsync"), (groupConfigStr, instanceId) => {
-      const groupConfig = JSON.parse(groupConfigStr);
-      this.getRedisMessagingClient(instanceId).createGroup(
-        groupConfig.groupName,
-        groupConfig.maxCapacity,
-        (response) =>
-          callback(this.withPrefix("ReceiveCreateGroupResponse"), JSON.stringify(response), instanceId),
-      );
-    });
-
-    addAction(this.withPrefix("DeleteGroupAsync"), (groupName, instanceId) =>
-      this.getRedisMessagingClient(instanceId).deleteGroup(groupName, (response) =>
-        callback(this.withPrefix("ReceiveDeleteGroupResponse"), JSON.stringify(response), instanceId),
-      ));
-
     addAction(this.withPrefix("DoJoinAsync"), (joiningConfigStr, instanceId) => {
       const joiningConfig = JSON.parse(joiningConfigStr);
-      this.getRedisMessagingClient(instanceId).join(joiningConfig.userId, joiningConfig.groupName, (response) =>
+      this.getRedisMessagingClient(instanceId).join(joiningConfig.userId, joiningConfig.groupName, joiningConfig.maxCapacity, (response) =>
         callback(this.withPrefix("ReceiveJoinResponse"), JSON.stringify(response), instanceId),
       );
     });
