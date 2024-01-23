@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using Cysharp.Threading.Tasks;
 using Extreal.Core.StageNavigation;
 using Extreal.Integration.Messaging.Redis.MVS.App;
@@ -9,16 +8,16 @@ namespace Extreal.Integration.Messaging.Redis.MVS.ClientControl
 {
     public class ClientControlPresenter : StagePresenterBase
     {
-        private readonly List<RedisMessagingClient> clients;
+        private readonly ClientCollection clientCollection;
 
         [SuppressMessage("CodeCracker", "CC0057")]
         public ClientControlPresenter
         (
             StageNavigator<StageName, SceneName> stageNavigator,
             AppState appState,
-            List<RedisMessagingClient> clients
+            ClientCollection clientCollection
         ) : base(stageNavigator, appState)
-            => this.clients = clients;
+            => this.clientCollection = clientCollection;
 
         protected override void Initialize
         (
@@ -26,7 +25,7 @@ namespace Extreal.Integration.Messaging.Redis.MVS.ClientControl
             AppState appState,
             CompositeDisposable sceneDisposables)
         {
-            foreach (var redisMessagingClient in clients)
+            foreach (var redisMessagingClient in clientCollection.Clients)
             {
                 redisMessagingClient.OnJoined
                     .Subscribe(userId => appState.NotifyInfo($"Joined: userId={userId}"))
@@ -44,11 +43,11 @@ namespace Extreal.Integration.Messaging.Redis.MVS.ClientControl
                     .Subscribe(_ => appState.Notify("Group is full."))
                     .AddTo(sceneDisposables);
 
-                redisMessagingClient.OnUserJoined
+                redisMessagingClient.OnClientJoined
                     .Subscribe(userId => appState.NotifyInfo($"User joined: userId={userId}"))
                     .AddTo(sceneDisposables);
 
-                redisMessagingClient.OnUserLeaving
+                redisMessagingClient.OnClientLeaving
                     .Subscribe(userId => appState.NotifyInfo($"User is leaving: userId={userId}"))
                     .AddTo(sceneDisposables);
             }

@@ -7,6 +7,7 @@ using Extreal.Integration.Messaging.Redis.MVS.App;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
+using Extreal.Integration.Messaging.Redis.MVS.ClientControl;
 
 namespace Extreal.Integration.Messaging.Redis.MVS.TextChatControl
 {
@@ -15,16 +16,17 @@ namespace Extreal.Integration.Messaging.Redis.MVS.TextChatControl
         private readonly RedisMessagingClient redisMessagingClient1;
         private readonly RedisMessagingClient redisMessagingClient2;
         private readonly TextChatControlView textChatControlView;
+        private readonly ClientCollection clientCollection;
         public TextChatControlPresenter
         (
             StageNavigator<StageName, SceneName> stageNavigator,
-            List<RedisMessagingClient> clients,
+            ClientCollection clientCollection,
             TextChatControlView textChatControlView,
             AppState appState
         ) : base(stageNavigator, appState)
         {
-            redisMessagingClient1 = clients.First();
-            redisMessagingClient2 = clients.Last();
+            redisMessagingClient1 = clientCollection.Clients.First();
+            redisMessagingClient2 = clientCollection.Clients.Last();
             this.textChatControlView = textChatControlView;
         }
 
