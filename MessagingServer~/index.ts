@@ -160,7 +160,6 @@ io.on("connection", async (socket: Socket) => {
     }
     if (myGroupName) {
       socket.to(myGroupName).emit("message", message);
-      log(`msg received: clientId=${message.from}, groupName=${myGroupName}`);
     }
   });
 
