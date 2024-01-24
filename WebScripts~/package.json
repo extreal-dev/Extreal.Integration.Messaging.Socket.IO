@@ -31,7 +31,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@extreal-dev/extreal.integration.web.common": "^1.0.0",
+    "@extreal-dev/extreal.integration.web.common": "1.1.0-next.2",
     "socket.io-client": "4.7.4"
   }
 }
