@@ -79,22 +79,34 @@ const io = new Server( {
   adapter: createRedisAdapter(pubClient, subClient),
 });
 
-const getGroupsInfo = (): { groupList: Map<string, string>, groupMembers: Map<string, string[]> } => {
+const getGroups = (): Map<string, string> => {
   // @ts-ignore See https://socket.io/docs/v4/rooms/#implementation-details
-  const groupsMap = io.of("/").adapter.rooms;
-  const groupList = new Map<string, string>();
-  const groupMembers = new Map<string, string[]>();
+  const rooms = io.of("/").adapter.rooms;
+  const groups = new Map<string, string>();
 
-  groupsMap.forEach((members: Set<string>, roomName: string) => {
+  rooms.forEach((members: Set<string>, roomName: string) => {
     const isDefaultRoom = members.has(roomName);
     if (!isDefaultRoom) {
       const firstMemberId = [...members][0];
-      groupList.set(roomName, firstMemberId);
-      groupMembers.set(roomName, [...members]);
+      groups.set(roomName, firstMemberId);
     }
   });
 
-  return { groupList, groupMembers };
+  return groups;
+};
+
+const getGroupsMembers = (): Map<string, string[]> => {
+  const rooms = io.of("/").adapter.rooms;
+  const groupsMembers = new Map<string, string[]>();
+
+  rooms.forEach((members: Set<string>, roomName: string) => {
+    const isDefaultRoom = members.has(roomName);
+    if (!isDefaultRoom) {
+      groupsMembers.set(roomName, [...members]);
+    }
+  });
+
+  return groupsMembers;
 };
 
 io.on("connection", async (socket: Socket) => {
@@ -105,9 +117,9 @@ io.on("connection", async (socket: Socket) => {
   socket.on(
     "list groups",
     async (callback: (response: ListGroupsResponse) => void) => {
-      const groupList = getGroupsInfo().groupList;
+      const groups = getGroups();
             callback({
-        groups: [...groupList].map((entry) => ({
+        groups: [...groups].map((entry) => ({
           name: entry[0],
           id: entry[1],
         })),
@@ -133,7 +145,7 @@ io.on("connection", async (socket: Socket) => {
 
       const groupMaxCapacity = await redisClient.getMaxCapacity(groupName);
       if (groupMaxCapacity) {
-        const connectedClientNum = getGroupsInfo().groupMembers.get(myGroupName)?.length as number;
+        const connectedClientNum = getGroupsMembers().get(myGroupName)?.length as number;
         if (groupMaxCapacity !== null && connectedClientNum >= groupMaxCapacity) {
           log(`Reject client: ${myClientId}`);
           callback("rejected");
