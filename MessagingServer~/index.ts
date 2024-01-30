@@ -175,7 +175,7 @@ io.on("connection", async (socket: Socket) => {
     }
   });
 
-  const handleDisconnect = async () => {
+  const leave = async () => {
     if (myGroupName) {
       log(`client leaving: clientId=${myClientId}, groupName=${myGroupName}`);
       socket.to(myGroupName).emit("client leaving", myClientId);
@@ -184,11 +184,11 @@ io.on("connection", async (socket: Socket) => {
     }
   };
 
-  socket.on("leave", handleDisconnect);
+  socket.on("leave", leave);
 
   socket.on("disconnect", () => {
     log(`client disconnected: socket id=${socket.id}`);
-    handleDisconnect();
+    leave();
   });
 
     log(`client connected: socket id=${socket.id}`);
