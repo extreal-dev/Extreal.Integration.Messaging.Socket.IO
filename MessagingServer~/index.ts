@@ -53,12 +53,10 @@ type Group = {
   name: string;
 };
 
-const log = (...logMessages: (string | object)[]) => {
+const log = (logMessage: () => string | object) => {
   if (isLogging) {
-    logMessages.forEach(logMessage => {
-      console.log(logMessage);
-    });
-  }
+    console.log(logMessage());
+}
 };
 
 const corsConfig = {
@@ -147,14 +145,14 @@ io.on("connection", async (socket: Socket) => {
       if (groupMaxCapacity) {
         const connectedClientNum = getGroupsMembers().get(myGroupName)?.length as number;
         if (groupMaxCapacity !== null && connectedClientNum >= groupMaxCapacity) {
-          log(`Reject client: ${myClientId}`);
+          log(() => `Reject client: ${myClientId}`);
           callback("rejected");
           return;
         }
       }
 
       callback("approved");
-      log(`join: clientId=${myClientId}, groupName=${myGroupName}`);     
+      log(() => `join: clientId=${myClientId}, groupName=${myGroupName}`);     
       await redisClient.setClientSocketId(clientId, socket.id.toString());
       await socket.join(myGroupName);
       socket.to(myGroupName).emit("client joined", myClientId);
@@ -177,7 +175,7 @@ io.on("connection", async (socket: Socket) => {
 
   const leave = async () => {
     if (myGroupName) {
-      log(`client leaving: clientId=${myClientId}, groupName=${myGroupName}`);
+      log(() => `client leaving: clientId=${myClientId}, groupName=${myGroupName}`);
       socket.to(myGroupName).emit("client leaving", myClientId);
       socket.leave(myGroupName);
       myGroupName = "";
@@ -187,15 +185,15 @@ io.on("connection", async (socket: Socket) => {
   socket.on("leave", leave);
 
   socket.on("disconnect", () => {
-    log(`client disconnected: socket id=${socket.id}`);
+    log(() => `client disconnected: socket id=${socket.id}`);
     leave();
   });
 
-    log(`client connected: socket id=${socket.id}`);
+    log(() => `client connected: socket id=${socket.id}`);
 
 });
   const redisClient = new RedisClient(redisHost, redisPort);
   await redisClient.connect();
-  log("=================================Restarted======================================");
+  log(() => "=================================Restarted======================================");
   await serve(io.handler(), { port: appPort, });
 
