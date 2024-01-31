@@ -1,43 +1,10 @@
 import { serve } from "https://deno.land/std@0.212.0/http/server.ts";
 import { createRedisAdapter, createRedisClient, Server, Socket } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
-import { connect, Redis } from "https://deno.land/x/redis@v0.32.1/mod.ts";
 
 const appPort = 3030;
 const redisHost = "messaging-redis";
-const redisPort = 6379;
 const isLogging = Deno.env.get("MESSAGING_LOGGING")?.toLowerCase() === "on";
-
-class RedisClient {
-  private hostname: string;
-  private port: number;
-  private client: Redis;
-
-  constructor(hostname: string, port: number) {
-    this.hostname = hostname;
-    this.port = port;
-  }
-
-  async connect() {
-    this.client = await connect({hostname: this.hostname, port: this.port});
-  }
-
-  async getMaxCapacity(groupName: string): Promise<number | null> {
-    const maxCapacityStr = await this.client.get(`MaxCapacity#${groupName}`);
-    return maxCapacityStr ? parseInt(maxCapacityStr, 10) : null;
-  }
-
-  async setMaxCapacity(groupName: string, maxCapacity: number): Promise<void> {
-    await this.client.set(`MaxCapacity#${groupName}`, maxCapacity.toString());
-  }
-
-  async getClientSocketId(clientId: string): Promise<string | null> {
-    return await this.client.get(clientId);
-  }
-
-  async setClientSocketId(clientId: string, socketId: string): Promise<void> {
-    await this.client.set(clientId, socketId);
-  }
-}
+const maxCapacity = 100;
 
 type Message = {
   from: string;
@@ -109,9 +76,7 @@ const getGroupsMembers = (): Map<string, string[]> => {
 
 io.on("connection", async (socket: Socket) => {
   let myGroupName = "";
-  let myClientId = "";
-  let myGroupMaxCapacity = 0;
-
+  let myClientId = socket.id.toString();
   socket.on(
     "list groups",
     async (callback: (response: ListGroupsResponse) => void) => {
@@ -128,23 +93,13 @@ io.on("connection", async (socket: Socket) => {
   socket.on(
     "join",
     async (
-      clientId: string,
       groupName: string,
-      maxCapacity: number,
       callback: (response: string) => void
     ) => {
       myGroupName = groupName;
-      myClientId = clientId;
-      myGroupMaxCapacity = maxCapacity;
-
       if (maxCapacity) {
-        await redisClient.setMaxCapacity(groupName, myGroupMaxCapacity);
-      }
-
-      const groupMaxCapacity = await redisClient.getMaxCapacity(groupName);
-      if (groupMaxCapacity) {
         const connectedClientNum = getGroupsMembers().get(myGroupName)?.length as number;
-        if (groupMaxCapacity !== null && connectedClientNum >= groupMaxCapacity) {
+        if (connectedClientNum >= maxCapacity) {
           log(() => `Reject client: ${myClientId}`);
           callback("rejected");
           return;
@@ -153,7 +108,6 @@ io.on("connection", async (socket: Socket) => {
 
       callback("approved");
       log(() => `join: clientId=${myClientId}, groupName=${myGroupName}`);     
-      await redisClient.setClientSocketId(clientId, socket.id.toString());
       await socket.join(myGroupName);
       socket.to(myGroupName).emit("client joined", myClientId);
     }
@@ -162,10 +116,7 @@ io.on("connection", async (socket: Socket) => {
   socket.on("message", async (message: Message) => {
     message.from = myClientId;
     if (message.to) {
-      const socketId = await redisClient.getClientSocketId(message.to);
-      if (socketId) {
-        socket.to(socketId).emit("message", message);
-      }
+      socket.to(message.to).emit("message", message);
       return;
     }
     if (myGroupName) {
@@ -185,15 +136,13 @@ io.on("connection", async (socket: Socket) => {
   socket.on("leave", leave);
 
   socket.on("disconnect", () => {
-    log(() => `client disconnected: socket id=${socket.id}`);
+    log(() => `client disconnected: socket id=${myClientId}`);
     leave();
   });
 
-    log(() => `client connected: socket id=${socket.id}`);
+    log(() => `client connected: socket id=${myClientId}`);
 
 });
-  const redisClient = new RedisClient(redisHost, redisPort);
-  await redisClient.connect();
   log(() => "=================================Restarted======================================");
   await serve(io.handler(), { port: appPort, });
 

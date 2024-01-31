@@ -3,19 +3,12 @@ services:
         image: redis:7.0.10-alpine
         container_name: messaging-redis
         restart: always
-        expose:
-            - 6379
-        tty: true
     messaging:
         image: denoland/deno:alpine-1.39.4
         container_name: messaging
-        init: true
         restart: always
-        tty: true
         ports:
          - 3030:3030
-        expose:
-            - 3030
         depends_on:
             - messaging-redis
         environment:
