@@ -171,6 +171,8 @@ class RedisMessagingClient {
     }
     this.callbacks.onMessageReceived(message);
   };
+
+  public getClientId = (() => this.socket?.id ?? "");
 }
 
 export { RedisMessagingClient };

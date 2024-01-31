@@ -87,6 +87,8 @@ namespace Extreal.Integration.Messaging.Redis
         private static void StopSocket(string instanceId, string unused)
             => instances[instanceId].StopSocket();
 
+        protected override string GetClientId() => WebGLHelper.CallFunction(WithPrefix(nameof(GetClientId)));
+
         protected override void DoReleaseManagedResources()
         {
             cancellation.Dispose();
@@ -113,9 +115,9 @@ namespace Extreal.Integration.Messaging.Redis
             return result.GroupListResponse;
         }
 
-        protected override async UniTask<string> DoJoinAsync(MessagingJoiningConfig connectionConfig, string localClientId)
+        protected override async UniTask<string> DoJoinAsync(RedisMessagingJoiningConfig connectionConfig)
         {
-            WebGLHelper.CallAction(WithPrefix(nameof(DoJoinAsync)), JsonJoiningConfig.ToJson(localClientId, connectionConfig.GroupName, connectionConfig.MaxCapacity), instanceId);
+            WebGLHelper.CallAction(WithPrefix(nameof(DoJoinAsync)), JsonJoiningConfig.ToJson(connectionConfig.GroupName), instanceId);
             await UniTask.WaitUntil(() => joinResponse != null, cancellationToken: cancellation.Token);
 
             var result = joinResponse;
@@ -186,22 +188,13 @@ namespace Extreal.Integration.Messaging.Redis
     [SuppressMessage("Usage", "CC0047")]
     public class JsonJoiningConfig
     {
-        [JsonPropertyName("clientId")]
-        public string ClientId { get; set; }
-
         [JsonPropertyName("groupName")]
         public string GroupName { get; set; }
-
-        [JsonPropertyName("maxCapacity")]
-        public int MaxCapacity { get; set; }
-
-        public static string ToJson(string clientId, string groupName, int maxCapacity)
+        public static string ToJson(string groupName)
         {
             var jsonJoiningConfig = new JsonJoiningConfig
             {
-                ClientId = clientId,
                 GroupName = groupName,
-                MaxCapacity = maxCapacity
             };
             return JsonSerializer.Serialize(jsonJoiningConfig);
         }

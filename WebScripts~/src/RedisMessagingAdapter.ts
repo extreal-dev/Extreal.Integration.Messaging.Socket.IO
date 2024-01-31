@@ -50,6 +50,8 @@ class RedisMessagingAdapter {
     addAction(this.withPrefix("DoSendMessageAsync"), (message, instanceId) =>
       this.getRedisMessagingClient(instanceId).sendMessage(JSON.parse(message)),
     );
+
+    addAction(this.withPrefix("GetClientId"), (instanceId) => this.getRedisMessagingClient(instanceId).getClientId())
   };
 
   private withPrefix = (name: string) => `WebGLRedisMessagingClient#${name}`;

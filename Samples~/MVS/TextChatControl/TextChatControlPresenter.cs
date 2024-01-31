@@ -66,7 +66,7 @@ namespace Extreal.Integration.Messaging.Redis.MVS.TextChatControl
         {
             try
             {
-                var messagingConfig = new MessagingJoiningConfig(appState.GroupName, 4);
+                var messagingConfig = new MessagingJoiningConfig(appState.GroupName);
                 await redisMessagingClient1.JoinAsync(messagingConfig);
                 await redisMessagingClient2.JoinAsync(messagingConfig);
             }

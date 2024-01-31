@@ -105,13 +105,13 @@ namespace Extreal.Integration.Messaging.Redis
             return groupList;
         }
 
-        protected override async UniTask<string> DoJoinAsync(MessagingJoiningConfig connectionConfig, string localClientId)
+        protected override async UniTask<string> DoJoinAsync(RedisMessagingJoiningConfig connectionConfig)
         {
             var message = default(string);
             await (await GetSocketAsync()).EmitAsync(
                 "join",
                 response => message = response.GetValue<string>(),
-                localClientId, connectionConfig.GroupName, connectionConfig.MaxCapacity
+                connectionConfig.GroupName
             ).ConfigureAwait(true);
             await UniTask.WaitUntil(() => message != null, cancellationToken: cancellation.Token);
             return message;
@@ -144,6 +144,8 @@ namespace Extreal.Integration.Messaging.Redis
             var message = response.GetValue<Message>();
             FireOnMessageReceived(message.From, message.MessageContent);
         }
+
+        protected override string GetClientId() => ioClient?.Id;
     }
 }
 #endif
