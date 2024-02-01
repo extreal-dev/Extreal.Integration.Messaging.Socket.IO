@@ -1,5 +1,5 @@
 import { RedisMessagingClient } from "./RedisMessagingClient";
-import { addAction, callback } from "@extreal-dev/extreal.integration.web.common";
+import { addAction, addFunction, callback } from "@extreal-dev/extreal.integration.web.common";
 
 class RedisMessagingAdapter {
   private redisMessagingClients = new Map<string, RedisMessagingClient>();
@@ -13,8 +13,6 @@ class RedisMessagingAdapter {
       this.redisMessagingClients.set(
         instanceId,
         new RedisMessagingClient(redisMessagingConfig, {
-          setJoiningGroupStatus: (isConnected) =>
-            callback(this.withPrefix("HandleJoiningGroupStatus"), isConnected, instanceId),
           onLeaving: (reason) => callback(this.withPrefix("HandleOnLeaving"), reason, instanceId),
           onUnexpectedLeft: (reason) =>
             callback(this.withPrefix("HandleOnUnexpectedLeft"), reason, instanceId),
@@ -40,7 +38,7 @@ class RedisMessagingAdapter {
 
     addAction(this.withPrefix("DoJoinAsync"), (joiningConfigStr, instanceId) => {
       const joiningConfig = JSON.parse(joiningConfigStr);
-      this.getRedisMessagingClient(instanceId).join(joiningConfig.clientId, joiningConfig.groupName, joiningConfig.maxCapacity, (response) =>
+      this.getRedisMessagingClient(instanceId).join(joiningConfig.groupName, (response) =>
         callback(this.withPrefix("ReceiveJoinResponse"), JSON.stringify(response), instanceId),
       );
     });
@@ -51,7 +49,7 @@ class RedisMessagingAdapter {
       this.getRedisMessagingClient(instanceId).sendMessage(JSON.parse(message)),
     );
 
-    addAction(this.withPrefix("GetClientId"), (instanceId) => this.getRedisMessagingClient(instanceId).getClientId())
+    addFunction(this.withPrefix("GetClientId"), (instanceId) => this.getRedisMessagingClient(instanceId).getClientId())
   };
 
   private withPrefix = (name: string) => `WebGLRedisMessagingClient#${name}`;

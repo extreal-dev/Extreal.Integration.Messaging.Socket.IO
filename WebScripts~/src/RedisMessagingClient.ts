@@ -27,7 +27,6 @@ type Message = {
 };
 
 type RedisMessagingClientCallbacks = {
-  setJoiningGroupStatus: (isJoinedGroup: string) => void;
   onLeaving: (reason: string) => void;
   onUnexpectedLeft: (reason: string) => void;
   onClientJoined: (clientId: string) => void;
@@ -94,7 +93,6 @@ class RedisMessagingClient {
 
     this.socket.disconnect();
     this.socket = null;
-    this.callbacks.setJoiningGroupStatus("false");
   };
 
   public releaseManagedResources = () => {
@@ -115,12 +113,12 @@ class RedisMessagingClient {
     });
   };
 
-  public join = (clientId: string, groupName: string, maxCapacity: number, handle: (response: WebGLJoinResponse) => void) => {
+  public join = (groupName: string, handle: (response: WebGLJoinResponse) => void) => {
     const returnError = () => {
       const ret: WebGLJoinResponse = { status: 504, message: "connect error" };
       handle(ret);
     }
-    this.getSocket(returnError).emit("join", clientId, groupName, maxCapacity, (response: string) => {
+    this.getSocket(returnError).emit("join", groupName, (response: string) => {
       if (this.isDebug) {
         console.log(response);
       }

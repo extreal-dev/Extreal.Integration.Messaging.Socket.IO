@@ -29,7 +29,6 @@ namespace Extreal.Integration.Messaging.Redis
                 return;
             }
 
-            SetJoiningGroupStatus(true);
             FireOnJoined(GetClientId());
         }
 

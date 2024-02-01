@@ -82,7 +82,6 @@ namespace Extreal.Integration.Messaging.Redis
             await ioClient.DisconnectAsync().ConfigureAwait(true);
             ioClient.Dispose();
             ioClient = null;
-            SetJoiningGroupStatus(false);
 
             stopSocketInProgress = false;
         }

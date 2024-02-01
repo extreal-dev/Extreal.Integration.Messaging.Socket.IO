@@ -38,7 +38,6 @@ namespace Extreal.Integration.Messaging.Redis
             WebGLHelper.CallAction(WithPrefix(nameof(WebGLRedisMessagingClient)), JsonRedisMessagingConfig.ToJson(messagingConfig), instanceId);
             WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveGroupListResponse)), ReceiveGroupListResponse);
             WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveJoinResponse)), ReceiveJoinResponse);
-            WebGLHelper.AddCallback(WithPrefix(nameof(HandleJoiningGroupStatus)), HandleJoiningGroupStatus);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnLeaving)), HandleOnLeaving);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnUnexpectedLeft)), HandleOnUnexpectedLeft);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnClientJoined)), HandleOnClientJoined);
@@ -56,9 +55,6 @@ namespace Extreal.Integration.Messaging.Redis
         private static void ReceiveJoinResponse(string joinResponse, string instanceId)
             => instances[instanceId].joinResponse = JsonSerializer.Deserialize<WebGLJoinResponse>(joinResponse);
 
-        [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void HandleJoiningGroupStatus(string isConnected, string instanceId)
-            => instances[instanceId].SetJoiningGroupStatus(bool.Parse(isConnected));
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void HandleOnLeaving(string reason, string instanceId)
@@ -87,7 +83,7 @@ namespace Extreal.Integration.Messaging.Redis
         private static void StopSocket(string instanceId, string unused)
             => instances[instanceId].StopSocket();
 
-        protected override string GetClientId() => WebGLHelper.CallFunction(WithPrefix(nameof(GetClientId)));
+        protected override string GetClientId() => WebGLHelper.CallFunction(WithPrefix(nameof(GetClientId)), instanceId);
 
         protected override void DoReleaseManagedResources()
         {
