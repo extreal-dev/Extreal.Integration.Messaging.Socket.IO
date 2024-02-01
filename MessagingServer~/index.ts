@@ -4,7 +4,7 @@ import { createRedisAdapter, createRedisClient, Server, Socket } from "https://d
 const appPort = 3030;
 const redisHost = "messaging-redis";
 const isLogging = Deno.env.get("MESSAGING_LOGGING")?.toLowerCase() === "on";
-const maxCapacity = 100;
+const maxCapacity = parseInt(Deno.env.get("MESSAGING_MAX_CAPACITY")) || 100;
 
 type Message = {
   from: string;
