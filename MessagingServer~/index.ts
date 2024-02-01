@@ -16,7 +16,6 @@ type ListGroupsResponse = {
 };
 
 type Group = {
-  id: string;
   name: string;
 };
 
@@ -63,7 +62,7 @@ io.on("connection", async (socket: Socket) => {
       wrapper({
         groups: [...rooms().entries()]
               .filter((entry) => !entry[1].has(entry[0]))
-              .map((entry) => ({ name: entry[0], id: [...entry[1]][0] })),
+              .map((entry) => ({ name: entry[0] })),
       });
     }
   );

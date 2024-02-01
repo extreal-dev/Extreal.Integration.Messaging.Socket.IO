@@ -12,7 +12,7 @@ type WebGLGroupListResponse = {
 }
 
 type GroupListResponse = {
-  groups: Array<{ id: string; name: string }>;
+  groups: Array<{ name: string }>;
 };
 
 type WebGLJoinResponse = {
