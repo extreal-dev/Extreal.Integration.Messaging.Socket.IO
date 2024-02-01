@@ -52,8 +52,6 @@ const rooms = (): Map<string, Set<string>> => {
 };
 
 io.on("connection", async (socket: Socket) => {
-  let myGroupName = "";
-  let myClientId = socket.id.toString();
   socket.on(
     "list groups",
     async (callback: (response: ListGroupsResponse) => void) => {
@@ -73,52 +71,53 @@ io.on("connection", async (socket: Socket) => {
   socket.on(
     "join",
     async (groupName: string, callback: (response: string) => void) => {
-      myGroupName = groupName;
-      const connectedClientNum = [...rooms().entries()]
-        .filter((entry) => entry[0] === myGroupName)
-        .map((entry) => entry[1].size)[0] || 0;
+      let connectedClientNum = 0;
+      const clients = rooms().get(groupName);
+      if (clients) {
+        connectedClientNum = clients.size;
+      }
 
       if (connectedClientNum >= maxCapacity) {
-        log(() => `Reject client: ${myClientId}`);
+        log(() => `Reject client: ${socket.id}`);
         callback("rejected");
         return;
       }
       
       callback("approved");
-      log(() => `join: clientId=${myClientId}, groupName=${myGroupName}`);     
-      await socket.join(myGroupName);
-      socket.to(myGroupName).emit("client joined", myClientId);
+      log(() => `join: clientId=${socket.id}, groupName=${groupName}`);     
+      await socket.join(groupName);
+      socket.to(groupName).emit("client joined", socket.id);
     }
   );
   
   socket.on("message", async (message: Message) => {
-    message.from = myClientId;
+    message.from = socket.id;
     if (message.to) {
       socket.to(message.to).emit("message", message);
       return;
     }
-    if (myGroupName) {
-      socket.to(myGroupName).emit("message", message);
-    }
+    socket.to([...socket.rooms]).emit("message", message);
   });
 
   const leave = async () => {
-    if (myGroupName) {
-      log(() => `client leaving: clientId=${myClientId}, groupName=${myGroupName}`);
-      socket.to(myGroupName).emit("client leaving", myClientId);
-      socket.leave(myGroupName);
-      myGroupName = "";
+    for (const room of socket.rooms) {
+      if (room === socket.id) {
+        continue;
+      }
+      log(() => `client leaving: clientId=${socket.id}, groupName=${room}`);
+      socket.to(room).emit("client leaving", socket.id);
+      socket.leave(room);
     }
   };
 
   socket.on("leave", leave);
 
   socket.on("disconnect", () => {
-    log(() => `client disconnected: socket id=${myClientId}`);
+    log(() => `client disconnected: socket id=${socket.id}`);
     leave();
   });
 
-    log(() => `client connected: socket id=${myClientId}`);
+    log(() => `client connected: socket id=${socket.id}`);
 
 });
   log(() => "=================================Restarted======================================");
