@@ -44,34 +44,11 @@ const io = new Server( {
   adapter: createRedisAdapter(pubClient, subClient),
 });
 
-const getGroups = (): Map<string, string> => {
-  // @ts-ignore See https://socket.io/docs/v4/rooms/#implementation-details
-  const rooms = io.of("/").adapter.rooms;
-  const groups = new Map<string, string>();
+const adapter = io.of("/").adapter;
 
-  rooms.forEach((members: Set<string>, roomName: string) => {
-    const isDefaultRoom = members.has(roomName);
-    if (!isDefaultRoom) {
-      const firstMemberId = [...members][0];
-      groups.set(roomName, firstMemberId);
-    }
-  });
-
-  return groups;
-};
-
-const getGroupsMembers = (): Map<string, string[]> => {
-  const rooms = io.of("/").adapter.rooms;
-  const groupsMembers = new Map<string, string[]>();
-
-  rooms.forEach((members: Set<string>, roomName: string) => {
-    const isDefaultRoom = members.has(roomName);
-    if (!isDefaultRoom) {
-      groupsMembers.set(roomName, [...members]);
-    }
-  });
-
-  return groupsMembers;
+const rooms = (): Map<string, Set<string>> => {
+    // @ts-ignore See https://socket.io/docs/v4/rooms/#implementation-details
+    return adapter.rooms;
 };
 
 io.on("connection", async (socket: Socket) => {
@@ -80,39 +57,40 @@ io.on("connection", async (socket: Socket) => {
   socket.on(
     "list groups",
     async (callback: (response: ListGroupsResponse) => void) => {
-      const groups = getGroups();
-            callback({
-        groups: [...groups].map((entry) => ({
-          name: entry[0],
-          id: entry[1],
-        })),
+      const wrapper = (response: ListGroupsResponse) => {
+        log(() => response);
+        callback(response);
+      };
+
+      wrapper({
+        groups: [...rooms().entries()]
+              .filter((entry) => !entry[1].has(entry[0]))
+              .map((entry) => ({ name: entry[0], id: [...entry[1]][0] })),
       });
     }
   );
 
   socket.on(
     "join",
-    async (
-      groupName: string,
-      callback: (response: string) => void
-    ) => {
+    async (groupName: string, callback: (response: string) => void) => {
       myGroupName = groupName;
-      if (maxCapacity) {
-        const connectedClientNum = getGroupsMembers().get(myGroupName)?.length as number;
-        if (connectedClientNum >= maxCapacity) {
-          log(() => `Reject client: ${myClientId}`);
-          callback("rejected");
-          return;
-        }
-      }
+      const connectedClientNum = [...rooms().entries()]
+        .filter((entry) => entry[0] === myGroupName)
+        .map((entry) => entry[1].size)[0] || 0;
 
+      if (connectedClientNum >= maxCapacity) {
+        log(() => `Reject client: ${myClientId}`);
+        callback("rejected");
+        return;
+      }
+      
       callback("approved");
       log(() => `join: clientId=${myClientId}, groupName=${myGroupName}`);     
       await socket.join(myGroupName);
       socket.to(myGroupName).emit("client joined", myClientId);
     }
   );
-
+  
   socket.on("message", async (message: Message) => {
     message.from = myClientId;
     if (message.to) {
