@@ -1,0 +1,24 @@
+services:
+    messaging-redis:
+        image: redis:7.0.10-alpine
+        container_name: messaging-redis
+        restart: always
+    messaging:
+        image: denoland/deno:alpine-1.39.4
+        container_name: messaging
+        restart: always
+        ports:
+         - 3030:3030
+        depends_on:
+            - messaging-redis
+        environment:
+            # If "on" is logging, otherwise is not. In production, set it to "off".
+            MESSAGING_LOGGING: ${MESSAGING_LOGGING:-on}
+            # Capacity of one room
+            MESSAGING_MAX_CAPACITY: ${MESSAGING_MAX_CAPACITY:-100}
+            # In production, change it to suit the environment.
+            MESSAGING_CORS_ORIGIN: ${MESSAGING_CORS_ORIGIN:-*}
+        working_dir: /app
+        volumes:
+        - .:/app
+        entrypoint: ["deno", "run", "--allow-env", "--allow-net", "index.ts"]
