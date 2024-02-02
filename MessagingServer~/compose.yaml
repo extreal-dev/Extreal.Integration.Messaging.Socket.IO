@@ -11,7 +11,9 @@ services:
             - '${REDIS_PORT:-6379}'
         tty: true
     redispubsub:
-        build: .
+        build: 
+            context: .
+            dockerfile: Dockerfile.node
         container_name: redispubsub
         init: true
         restart: always
