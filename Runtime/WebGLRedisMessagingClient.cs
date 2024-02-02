@@ -1,7 +1,6 @@
 #if UNITY_WEBGL
 using Cysharp.Threading.Tasks;
 using System.Diagnostics.CodeAnalysis;
-using Extreal.Integration.Messaging;
 using Extreal.Integration.Web.Common;
 using AOT;
 using System;
@@ -27,13 +26,13 @@ namespace Extreal.Integration.Messaging.Redis
 
         private readonly string instanceId;
 
-        private static readonly Dictionary<string, WebGLRedisMessagingClient> instances = new Dictionary<string, WebGLRedisMessagingClient>();
+        private static readonly Dictionary<string, WebGLRedisMessagingClient> Instances = new Dictionary<string, WebGLRedisMessagingClient>();
 
         [SuppressMessage("Usage", "CC0022")]
         public WebGLRedisMessagingClient(WebGLRedisMessagingConfig messagingConfig)
         {
             instanceId = Guid.NewGuid().ToString();
-            instances[instanceId] = this;
+            Instances[instanceId] = this;
 
             WebGLHelper.CallAction(WithPrefix(nameof(WebGLRedisMessagingClient)), JsonRedisMessagingConfig.ToJson(messagingConfig), instanceId);
             WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveGroupListResponse)), ReceiveGroupListResponse);
@@ -49,39 +48,39 @@ namespace Extreal.Integration.Messaging.Redis
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void ReceiveGroupListResponse(string jsonResponse, string instanceId)
-            => instances[instanceId].groupListResponse = JsonSerializer.Deserialize<WebGLGroupListResponse>(jsonResponse);
+            => Instances[instanceId].groupListResponse = JsonSerializer.Deserialize<WebGLGroupListResponse>(jsonResponse);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void ReceiveJoinResponse(string joinResponse, string instanceId)
-            => instances[instanceId].joinResponse = JsonSerializer.Deserialize<WebGLJoinResponse>(joinResponse);
+            => Instances[instanceId].joinResponse = JsonSerializer.Deserialize<WebGLJoinResponse>(joinResponse);
 
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void HandleOnLeaving(string reason, string instanceId)
-            => instances[instanceId].FireOnLeaving(reason);
+            => Instances[instanceId].FireOnLeaving(reason);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void HandleOnUnexpectedLeft(string reason, string instanceId)
-            => instances[instanceId].FireOnUnexpectedLeft(reason);
+            => Instances[instanceId].FireOnUnexpectedLeft(reason);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void HandleOnClientJoined(string clientId, string instanceId)
-            => instances[instanceId].FireOnClientJoined(clientId);
+            => Instances[instanceId].FireOnClientJoined(clientId);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void HandleOnClientLeaving(string clientId, string instanceId)
-            => instances[instanceId].FireOnClientLeaving(clientId);
+            => Instances[instanceId].FireOnClientLeaving(clientId);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void HandleOnMessageReceived(string message, string instanceId)
         {
             var messageDeserialized = JsonSerializer.Deserialize<Message>(message);
-            instances[instanceId].FireOnMessageReceived(messageDeserialized.From, messageDeserialized.MessageContent);
+            Instances[instanceId].FireOnMessageReceived(messageDeserialized.From, messageDeserialized.MessageContent);
         }
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void StopSocket(string instanceId, string unused)
-            => instances[instanceId].StopSocket();
+            => Instances[instanceId].StopSocket();
 
         protected override string GetClientId() => WebGLHelper.CallFunction(WithPrefix(nameof(GetClientId)), instanceId);
 
