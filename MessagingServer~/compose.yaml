@@ -8,6 +8,9 @@ services:
         expose:
             - '${REDIS_PORT:-6379}'
         tty: true
+        volumes:
+            - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+
     redispubsub:
         build: .
         container_name: redispubsub
