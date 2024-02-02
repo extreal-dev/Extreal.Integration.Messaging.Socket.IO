@@ -3,7 +3,6 @@ using System.Linq;
 using Cysharp.Threading.Tasks;
 using Extreal.Core.StageNavigation;
 using Extreal.Integration.Messaging.Redis.MVS.App;
-using Extreal.Integration.Messaging.Redis.MVS.ClientControl;
 using UniRx;
 
 namespace Extreal.Integration.Messaging.Redis.MVS.GroupSelectionScreen
