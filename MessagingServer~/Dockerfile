@@ -24,3 +24,9 @@ FROM node:18.16.0-alpine as runner
     # COPY src/videos.json ./
     # 実行
     CMD ["node", "./dist/index.js"]
+
+FROM redis:7.0.10-alpine
+    COPY ./redis/redis.conf /usr/local/etc/redis/redis.conf
+    CMD ["redis-server", "/usr/local/etc/redis/redis.conf"]
+
+
