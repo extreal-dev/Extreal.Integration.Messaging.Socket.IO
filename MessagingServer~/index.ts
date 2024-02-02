@@ -46,7 +46,6 @@ const io = new Server( {
 const adapter = io.of("/").adapter;
 
 const rooms = (): Map<string, Set<string>> => {
-    // @ts-ignore See https://socket.io/docs/v4/rooms/#implementation-details
     return adapter.rooms;
 };
 
