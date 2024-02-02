@@ -1,6 +1,8 @@
 services:
     sigredis:
-        image: redis:7.0.10-alpine
+        build:
+            context: .
+            dockerfile: Dockerfile.redis
         container_name: sigredis
         restart: always
         # ports:
@@ -8,9 +10,6 @@ services:
         expose:
             - '${REDIS_PORT:-6379}'
         tty: true
-        volumes:
-            - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
-
     redispubsub:
         build: .
         container_name: redispubsub
