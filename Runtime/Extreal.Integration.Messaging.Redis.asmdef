@@ -7,8 +7,7 @@
         "Extreal.Integration.Messaging",
         "Extreal.Integration.Web.Common",
         "UniRx",
-        "UniTask",
-        "Extreal.Framework.Analyzer"
+        "UniTask"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
