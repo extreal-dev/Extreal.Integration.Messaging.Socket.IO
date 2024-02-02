@@ -45,7 +45,7 @@ namespace Extreal.Integration.Messaging.Redis.MVS.GroupSelectionScreen
                 .AddTo(sceneDisposables);
 
             groupSelectionScreenView.OnUpdateButtonClicked
-              .Subscribe(async _ =>
+                .Subscribe(async _ =>
                 {
                     try
                     {
