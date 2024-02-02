@@ -70,13 +70,9 @@ io.on("connection", async (socket: Socket) => {
     socket.on(
         "join",
         async (groupName: string, callback: (response: string) => void) => {
-            let connectedClientNum = 0;
             const clients = rooms().get(groupName);
-            if (clients) {
-                connectedClientNum = clients.size;
-            }
-
-            if (connectedClientNum >= maxCapacity) {
+            const isCapacityOver = clients && clients.size >= maxCapacity;
+            if (isCapacityOver) {
                 log(() => `Reject client: ${socket.id}`);
                 callback("rejected");
                 return;
