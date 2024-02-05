@@ -32,7 +32,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -145,7 +144,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2086250153483841142}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e1d7b267af949cb4a8363876bd7ae898, type: 3}
+  m_Script: {fileID: 11500000, guid: 321e7a40c2a0c454f91e9ea06b4d0647, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   messageText: {fileID: 4365510740842830095}

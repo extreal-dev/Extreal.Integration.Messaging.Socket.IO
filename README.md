@@ -36,20 +36,18 @@
 ### Functional Test
 
 - Group selection screen
-  - Ability to create a group by specifying a name with host role selected (create group)
+  - Ability to join a group by specifying a name with host role selected (join group)
   - Ability to list groups with client role selected (list groups)
-  - Ability to join a group (join group)
   - Ability to return to title screen (dispose messaging client)
 - VirtualSpace
   - Clients can join the group (client joins)
   - Clients can leave the group (client leaves)
-  - Ability to send text (send text chat)
+  - Ability to send text by both SEND1 and SEND2 button (send text chat from different 2 messaging clients)
   - Ability to see received text (receive text chat)
-  - Ability to return to group selection screen with host role selected (delete group)
   - Ability to return to group selection screen with client role selected (leave group)
 
 ### Failure Test
 
-- Join as a third user (joining approval rejected )
+- Join as a fifth client by starting a third sample application  (joining approval rejected )
 - join and then shut down the messaging server (unexpected leave)
-- Create a group and join after shutting down the messaging server (connection exception)
+- Join after shutting down the messaging server (connection exception)

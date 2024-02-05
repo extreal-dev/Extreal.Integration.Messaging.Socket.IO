@@ -15,7 +15,6 @@
         "Extreal.Core.Logging",
         "Extreal.Core.StageNavigation",
         "Extreal.Core.Common",
-        "Extreal.Integration.AssetWorkflow.Addressables",
         "Extreal.Integration.Web.Common",
         "Extreal.Integration.Messaging",
         "Extreal.Integration.Messaging.Redis"

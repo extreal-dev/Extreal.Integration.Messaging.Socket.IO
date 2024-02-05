@@ -11,16 +11,17 @@ namespace Extreal.Integration.Messaging.Redis.MVS.GroupSelectionScreen
     {
         private readonly RedisMessagingClient redisMessagingClient;
         private readonly GroupSelectionScreenView groupSelectionScreenView;
+        private readonly ClientCollection clientCollection;
 
         public GroupSelectionScreenPresenter
         (
             StageNavigator<StageName, SceneName> stageNavigator,
             AppState appState,
-            RedisMessagingClient redisMessagingClient,
+            ClientCollection clientCollection,
             GroupSelectionScreenView groupSelectionScreenView
         ) : base(stageNavigator, appState)
         {
-            this.redisMessagingClient = redisMessagingClient;
+            redisMessagingClient = clientCollection.Clients.First();
             this.groupSelectionScreenView = groupSelectionScreenView;
         }
 
@@ -44,7 +45,7 @@ namespace Extreal.Integration.Messaging.Redis.MVS.GroupSelectionScreen
                 .AddTo(sceneDisposables);
 
             groupSelectionScreenView.OnUpdateButtonClicked
-              .Subscribe(async _ =>
+                .Subscribe(async _ =>
                 {
                     try
                     {
