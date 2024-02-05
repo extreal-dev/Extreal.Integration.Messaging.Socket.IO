@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.212.0/http/server.ts";
 import { createRedisAdapter, createRedisClient, Server, Socket } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
+// import * as bufferUtil from "npm:bufferutil@4.0.8";
+// import * as utfValidate from "npm:utf-8-validate@6.0.3";
 
 const appPort = 3030;
 const redisHost = "messaging-redis";
