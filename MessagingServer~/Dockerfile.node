@@ -8,6 +8,7 @@ FROM node:18.16.0-alpine as builder
     # Typescriptコードをコピーしてビルド
     COPY src tsconfig.json ./
     RUN npm run build
+    RUN npm install --save-optional bufferutil utf-8-validate
 
 # 実行用イメージ
 FROM node:18.16.0-alpine as runner
@@ -19,6 +20,7 @@ FROM node:18.16.0-alpine as runner
     # 本番環境のパッケージをインストール
     COPY package*.json ./
     RUN npm install --omit=dev && npm cache clean --force
+    RUN npm install --save-optional bufferutil utf-8-validate
     # builderからビルド結果をコピー
     COPY --from=builder /work/dist ./dist
     # COPY src/videos.json ./
