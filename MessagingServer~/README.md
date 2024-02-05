@@ -11,5 +11,5 @@ If you want to check the logs of the messaging server, use the following
 command.
 
 ```bash
-docker compose logs -f messaging
+docker compose logs -f redispubsub
 ```

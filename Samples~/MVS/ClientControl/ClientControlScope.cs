@@ -1,7 +1,6 @@
 ﻿using VContainer;
 using VContainer.Unity;
 using SocketIOClient;
-using Extreal.Integration.Messaging.Redis.MVS.App;
 
 namespace Extreal.Integration.Messaging.Redis.MVS.ClientControl
 {
@@ -10,11 +9,9 @@ namespace Extreal.Integration.Messaging.Redis.MVS.ClientControl
         protected override void Configure(IContainerBuilder builder)
         {
             var redisMessagingConfig = new RedisMessagingConfig("http://localhost:3030", new SocketIOOptions { EIO = EngineIO.V4 });
-            var redisMessagingClient1 = RedisMessagingClientProvider.Provide(redisMessagingConfig);
-            var redisMessagingClient2 = RedisMessagingClientProvider.Provide(redisMessagingConfig);
-            var clientCollection = new ClientCollection(redisMessagingClient1, redisMessagingClient2);
+            var redisMessagingClient = RedisMessagingClientProvider.Provide(redisMessagingConfig);
 
-            builder.RegisterComponent(clientCollection);
+            builder.RegisterComponent(redisMessagingClient);
             builder.RegisterEntryPoint<ClientControlPresenter>();
         }
     }

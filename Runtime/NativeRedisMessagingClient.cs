@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using System.Diagnostics.CodeAnalysis;
 using SocketIOClient;
+using Extreal.Integration.Messaging;
 using System.Threading;
 
 namespace Extreal.Integration.Messaging.Redis
@@ -41,8 +42,9 @@ namespace Extreal.Integration.Messaging.Redis
             ioClient = new SocketIO(redisMessagingConfig.Url, redisMessagingConfig.SocketIOOptions);
 
             ioClient.OnDisconnected += DisconnectEventHandler;
-            ioClient.On("client joined", ClientJoinedEventHandler);
-            ioClient.On("client leaving", ClientLeavingEventHandler);
+            ioClient.On("delete group", DeleteGroupEventHandler);
+            ioClient.On("user joined", UserJoinedEventHandler);
+            ioClient.On("user leaving", UserLeavingEventHandler);
             ioClient.On("message", MessageReceivedEventHandler);
 
             try
@@ -61,7 +63,6 @@ namespace Extreal.Integration.Messaging.Redis
         {
             if (ioClient is null)
             {
-                // Not covered by testing due to defensive implementation
                 return;
             }
 
@@ -81,6 +82,7 @@ namespace Extreal.Integration.Messaging.Redis
             await ioClient.DisconnectAsync().ConfigureAwait(true);
             ioClient.Dispose();
             ioClient = null;
+            SetJoiningGroupStatus(false);
 
             stopSocketInProgress = false;
         }
@@ -103,13 +105,28 @@ namespace Extreal.Integration.Messaging.Redis
             return groupList;
         }
 
-        protected override async UniTask<string> DoJoinAsync(RedisMessagingJoiningConfig connectionConfig)
+        protected override async UniTask<CreateGroupResponse> DoCreateGroupAsync(GroupConfig groupConfig)
+        {
+            var createGroupResponse = default(CreateGroupResponse);
+            await (await GetSocketAsync()).EmitAsync(
+                "create group",
+                response => createGroupResponse = response.GetValue<CreateGroupResponse>(),
+                groupConfig.GroupName, groupConfig.MaxCapacity
+            ).ConfigureAwait(true);
+            await UniTask.WaitUntil(() => createGroupResponse != null, cancellationToken: cancellation.Token);
+            return createGroupResponse;
+        }
+
+        public override async UniTask DeleteGroupAsync(string groupName)
+            => await (await GetSocketAsync()).EmitAsync("delete group", _ => { }, groupName).ConfigureAwait(true);
+
+        protected override async UniTask<string> DoJoinAsync(MessagingJoiningConfig connectionConfig, string localUserId)
         {
             var message = default(string);
             await (await GetSocketAsync()).EmitAsync(
                 "join",
                 response => message = response.GetValue<string>(),
-                connectionConfig.GroupName
+                localUserId, connectionConfig.GroupName
             ).ConfigureAwait(true);
             await UniTask.WaitUntil(() => message != null, cancellationToken: cancellation.Token);
             return message;
@@ -125,16 +142,22 @@ namespace Extreal.Integration.Messaging.Redis
         private void DisconnectEventHandler(object sender, string reason)
             => FireOnUnexpectedLeft(reason);
 
-        private void ClientJoinedEventHandler(SocketIOResponse response)
+        private void DeleteGroupEventHandler(SocketIOResponse response)
         {
-            var connectedClientId = response.GetValue<string>();
-            FireOnClientJoined(connectedClientId);
+            FireOnLeaving("delete group");
+            StopSocketAsync().Forget();
         }
 
-        private void ClientLeavingEventHandler(SocketIOResponse response)
+        private void UserJoinedEventHandler(SocketIOResponse response)
         {
-            var disconnectingClientId = response.GetValue<string>();
-            FireOnClientLeaving(disconnectingClientId);
+            var connectedUserId = response.GetValue<string>();
+            FireOnUserJoined(connectedUserId);
+        }
+
+        private void UserLeavingEventHandler(SocketIOResponse response)
+        {
+            var disconnectingUserId = response.GetValue<string>();
+            FireOnUserLeaving(disconnectingUserId);
         }
 
         private void MessageReceivedEventHandler(SocketIOResponse response)
@@ -142,8 +165,6 @@ namespace Extreal.Integration.Messaging.Redis
             var message = response.GetValue<Message>();
             FireOnMessageReceived(message.From, message.MessageContent);
         }
-
-        protected override string GetClientId() => ioClient?.Id;
     }
 }
 #endif

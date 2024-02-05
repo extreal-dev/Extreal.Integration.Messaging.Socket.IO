@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
 using Extreal.Core.Logging;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
+using Extreal.Integration.Messaging;
 
 namespace Extreal.Integration.Messaging.Redis
 {
@@ -18,8 +20,9 @@ namespace Extreal.Integration.Messaging.Redis
             {
                 Logger.LogDebug($"Join: GroupName={joiningConfig.GroupName}");
             }
+            var localUserId = Guid.NewGuid().ToString();
 
-            var message = await DoJoinAsync(new RedisMessagingJoiningConfig(joiningConfig));
+            var message = await DoJoinAsync(joiningConfig, localUserId);
 
             if (message == "rejected")
             {
@@ -27,12 +30,11 @@ namespace Extreal.Integration.Messaging.Redis
                 return;
             }
 
-            FireOnJoined(GetClientId());
+            SetJoiningGroupStatus(true);
+            FireOnJoined(localUserId);
         }
 
-        protected abstract string GetClientId();
-
-        protected abstract UniTask<string> DoJoinAsync(RedisMessagingJoiningConfig redisMessagingJoiningConfig);
+        protected abstract UniTask<string> DoJoinAsync(MessagingJoiningConfig connectionConfig, string localUserId);
 
         protected sealed override async UniTask DoSendMessageAsync(string message, string to)
         {
@@ -57,14 +59,6 @@ namespace Extreal.Integration.Messaging.Redis
 
             [JsonPropertyName("messageContent")]
             public string MessageContent { get; set; }
-        }
-
-        public class RedisMessagingJoiningConfig : MessagingJoiningConfig
-        {
-            public RedisMessagingJoiningConfig(MessagingJoiningConfig messagingJoiningConfig)
-                : base(messagingJoiningConfig.GroupName)
-            {
-            }
         }
     }
 }

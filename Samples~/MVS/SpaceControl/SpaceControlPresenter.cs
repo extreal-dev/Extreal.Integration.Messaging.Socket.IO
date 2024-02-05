@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using Extreal.Core.Common.System;
 using Extreal.Core.StageNavigation;
 using Extreal.Integration.Messaging.Redis.MVS.App;
@@ -10,7 +9,6 @@ namespace Extreal.Integration.Messaging.Redis.MVS.SpaceControl
 {
     public class SpaceControlPresenter : DisposableBase, IInitializable
     {
-        [SuppressMessage("Usage", "CC0033")]
         private readonly CompositeDisposable disposables = new CompositeDisposable();
 
         private readonly StageNavigator<StageName, SceneName> stageNavigator;

@@ -1,24 +1,43 @@
 services:
-    messaging-redis:
-        image: redis:7.0.10-alpine
-        container_name: messaging-redis
+    sigredis:
+        build:
+            context: .
+            dockerfile: Dockerfile.redis
+        container_name: sigredis
         restart: always
-    messaging:
-        image: denoland/deno:alpine-1.39.4
-        container_name: messaging
+        # ports:
+        #  - 7379:7379
+        expose:
+            - '${REDIS_PORT:-6379}'
+        tty: true
+    redispubsub:
+        build: 
+            context: .
+            dockerfile: Dockerfile.node
+        container_name: redispubsub
+        init: true
         restart: always
+        tty: true
+        env_file: ${PWD}/.env
         ports:
          - 3030:3030
+        expose:
+            - ${APP_PORT:-3030}
+            - ${API_PORT:-3031}
+            - ${REDIS_HOST:-localhost}
+            - ${REDIS_PORT:-6379}
         depends_on:
-            - messaging-redis
-        environment:
-            # If "on" is logging, otherwise is not. In production, set it to "off".
-            MESSAGING_LOGGING: ${MESSAGING_LOGGING:-on}
-            # Capacity of one room
-            MESSAGING_MAX_CAPACITY: ${MESSAGING_MAX_CAPACITY:-100}
-            # In production, change it to suit the environment.
-            MESSAGING_CORS_ORIGIN: ${MESSAGING_CORS_ORIGIN:-*}
-        working_dir: /app
+            - sigredis
+    signginx:
+        image: nginx:1.24.0
+        container_name: signginx
+        restart: always
+        ports:
+        #- '80:80'
+        - '443:443'
         volumes:
-        - .:/app
-        entrypoint: ["deno", "run", "--allow-env", "--allow-net", "index.ts"]
+            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+            - ./keys/fullchain.pem:/etc/nginx/fullchain.pem:ro
+            - ./keys/privkey.pem:/etc/nginx/privkey.pem:ro
+        depends_on:
+            - sigredis
