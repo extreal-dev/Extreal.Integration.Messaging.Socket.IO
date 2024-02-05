@@ -1,6 +1,6 @@
 {
   "name": "jp.co.tis.extreal.integration.messaging.redis",
-  "version": "1.0.0-next.1",
+  "version": "1.0.0-next.2",
   "displayName": "Extreal.Integration.Messaging.Redis",
   "unity": "2022.3",
   "author": {
