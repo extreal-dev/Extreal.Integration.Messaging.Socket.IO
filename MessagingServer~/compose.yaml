@@ -26,3 +26,5 @@ services:
             - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
             - ./keys/fullchain.pem:/etc/nginx/fullchain.pem:ro
             - ./keys/privkey.pem:/etc/nginx/privkey.pem:ro
+        depends_on:
+            - messaging

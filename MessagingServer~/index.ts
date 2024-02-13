@@ -1,7 +1,4 @@
-import { serve } from "https://deno.land/std@0.212.0/http/server.ts";
 import { Server, Socket } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
-// import * as bufferUtil from "npm:bufferutil@4.0.8";
-// import * as utfValidate from "npm:utf-8-validate@6.0.3";
 
 const appPort = 3030;
 const isLogging = Deno.env.get("MESSAGING_LOGGING")?.toLowerCase() === "on";
@@ -105,4 +102,4 @@ io.on("connection", async (socket: Socket) => {
     log(() => `client connected: socket id=${socket.id}`);
 });
 log(() => "=================================Restarted======================================");
-await serve(io.handler(), { port: appPort, });
+await Deno.serve({ port: appPort, }, io.handler());
