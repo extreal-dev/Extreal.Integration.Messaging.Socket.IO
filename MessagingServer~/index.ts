@@ -1,10 +1,9 @@
 import { serve } from "https://deno.land/std@0.212.0/http/server.ts";
-import { createRedisAdapter, createRedisClient, Server, Socket } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
+import { Server, Socket } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
 // import * as bufferUtil from "npm:bufferutil@4.0.8";
 // import * as utfValidate from "npm:utf-8-validate@6.0.3";
 
 const appPort = 3030;
-const redisHost = "messaging-redis";
 const isLogging = Deno.env.get("MESSAGING_LOGGING")?.toLowerCase() === "on";
 const maxCapacity = parseInt(Deno.env.get("MESSAGING_MAX_CAPACITY")) || 100;
 
@@ -31,18 +30,8 @@ const corsConfig = {
     origin: Deno.env.get("MESSAGING_CORS_ORIGIN"),
 };
 
-const [pubClient, subClient] = await Promise.all([
-    createRedisClient({
-        hostname: redisHost,
-    }),
-    createRedisClient({
-        hostname: redisHost,
-    }),
-]);
-
 const io = new Server( {
     cors: corsConfig,
-    adapter: createRedisAdapter(pubClient, subClient),
 });
 
 const adapter = io.of("/").adapter;
