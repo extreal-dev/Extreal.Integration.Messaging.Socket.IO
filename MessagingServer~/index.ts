@@ -1,6 +1,7 @@
-import { Server, Socket } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
+import { createRedisAdapter, createRedisClient, Server, Socket } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
 
 const appPort = 3030;
+const redisHost = "messaging-redis";
 const isLogging = Deno.env.get("MESSAGING_LOGGING")?.toLowerCase() === "on";
 const maxCapacity = parseInt(Deno.env.get("MESSAGING_MAX_CAPACITY")) || 100;
 
@@ -27,14 +28,30 @@ const corsConfig = {
     origin: Deno.env.get("MESSAGING_CORS_ORIGIN"),
 };
 
+const [pubClient, subClient] = await Promise.all([
+    createRedisClient({
+        hostname: redisHost,
+    }),
+    createRedisClient({
+        hostname: redisHost,
+    }),
+]);
+
 const io = new Server( {
     cors: corsConfig,
+    adapter: createRedisAdapter(pubClient, subClient),
 });
 
 const adapter = io.of("/").adapter;
 
 const rooms = (): Map<string, Set<string>> => {
     return adapter.rooms;
+};
+
+const getGroups = () : string[] => {
+    return [...rooms().entries()]
+        .filter((entry) => !entry[1].has(entry[0]))
+        .map((entry) => (entry[0]))
 };
 
 io.on("connection", async (socket: Socket) => {
@@ -46,10 +63,22 @@ io.on("connection", async (socket: Socket) => {
                 callback(response);
             };
 
-            wrapper({
-                groups: [...rooms().entries()]
-                    .filter((entry) => !entry[1].has(entry[0]))
-                    .map((entry) => ({ name: entry[0] })),
+            io.serverSideEmit("list server groups", (error, responses: string[][]) => {
+                if (error && isLogging) {
+                    console.log(error);
+                }
+                const groups: Set<string> = new Set();
+
+                const localGroups = getGroups();
+                localGroups.forEach(localRoom => groups.add(localRoom));
+
+                responses.forEach(response => {
+                    response.forEach(group => {
+                        groups.add(group);
+                    });
+                });
+
+                wrapper({groups: [...groups].map(room => ({ name: room }))})
             });
         }
     );
@@ -101,5 +130,10 @@ io.on("connection", async (socket: Socket) => {
 
     log(() => `client connected: socket id=${socket.id}`);
 });
+
+io.on("list server groups", (callback: (rooms: string[]) => void) => {
+    callback(getGroups());
+});
+
 log(() => "=================================Restarted======================================");
 await Deno.serve({ port: appPort, }, io.handler());
