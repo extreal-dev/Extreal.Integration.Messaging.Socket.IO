@@ -3,7 +3,7 @@ using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.TitleScreen
+namespace Extreal.Integration.Messaging.Socket.IO.MVS.TitleScreen
 {
     public class TitleScreenView : MonoBehaviour
     {

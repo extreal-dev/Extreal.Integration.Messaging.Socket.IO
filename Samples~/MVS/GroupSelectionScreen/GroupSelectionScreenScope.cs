@@ -2,7 +2,7 @@
 using VContainer;
 using VContainer.Unity;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.GroupSelectionScreen
+namespace Extreal.Integration.Messaging.Socket.IO.MVS.GroupSelectionScreen
 {
     public class GroupSelectionScreenScope : LifetimeScope
     {

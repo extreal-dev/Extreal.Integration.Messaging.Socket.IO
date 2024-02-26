@@ -2,7 +2,7 @@
 using VContainer;
 using VContainer.Unity;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.SpaceControl
+namespace Extreal.Integration.Messaging.Socket.IO.MVS.SpaceControl
 {
     public class SpaceControlScope : LifetimeScope
     {

@@ -1,8 +1,7 @@
 import { serve } from "https://deno.land/std@0.212.0/http/server.ts";
-import { createRedisAdapter, createRedisClient, Server, Socket } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
+import { Server, Socket } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
 
 const appPort = 3030;
-const redisHost = "messaging-redis";
 const isLogging = Deno.env.get("MESSAGING_LOGGING")?.toLowerCase() === "on";
 const maxCapacity = parseInt(Deno.env.get("MESSAGING_MAX_CAPACITY")) || 100;
 
@@ -29,18 +28,8 @@ const corsConfig = {
     origin: Deno.env.get("MESSAGING_CORS_ORIGIN"),
 };
 
-const [pubClient, subClient] = await Promise.all([
-    createRedisClient({
-        hostname: redisHost,
-    }),
-    createRedisClient({
-        hostname: redisHost,
-    }),
-]);
-
 const io = new Server( {
     cors: corsConfig,
-    adapter: createRedisAdapter(pubClient, subClient),
 });
 
 const adapter = io.of("/").adapter;
@@ -76,14 +65,14 @@ io.on("connection", async (socket: Socket) => {
                 callback("rejected");
                 return;
             }
-            
+
             callback("approved");
-            log(() => `join: clientId=${socket.id}, groupName=${groupName}`);     
+            log(() => `join: clientId=${socket.id}, groupName=${groupName}`);
             await socket.join(groupName);
             socket.to(groupName).emit("client joined", socket.id);
         }
     );
-    
+
     socket.on("message", async (message: Message) => {
         message.from = socket.id;
         if (message.to) {

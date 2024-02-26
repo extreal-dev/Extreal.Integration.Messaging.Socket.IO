@@ -2,14 +2,14 @@
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using Extreal.Core.StageNavigation;
-using Extreal.Integration.Messaging.Redis.MVS.App;
+using Extreal.Integration.Messaging.Socket.IO.MVS.App;
 using UniRx;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.GroupSelectionScreen
+namespace Extreal.Integration.Messaging.Socket.IO.MVS.GroupSelectionScreen
 {
     public class GroupSelectionScreenPresenter : StagePresenterBase
     {
-        private readonly RedisMessagingClient redisMessagingClient;
+        private readonly SocketIOMessagingClient socketIOMessagingClient;
         private readonly GroupSelectionScreenView groupSelectionScreenView;
         private readonly ClientCollection clientCollection;
 
@@ -21,7 +21,7 @@ namespace Extreal.Integration.Messaging.Redis.MVS.GroupSelectionScreen
             GroupSelectionScreenView groupSelectionScreenView
         ) : base(stageNavigator, appState)
         {
-            redisMessagingClient = clientCollection.Clients.First();
+            socketIOMessagingClient = clientCollection.Clients.First();
             this.groupSelectionScreenView = groupSelectionScreenView;
         }
 
@@ -49,7 +49,7 @@ namespace Extreal.Integration.Messaging.Redis.MVS.GroupSelectionScreen
                 {
                     try
                     {
-                        var groups = await redisMessagingClient.ListGroupsAsync();
+                        var groups = await socketIOMessagingClient.ListGroupsAsync();
                         var groupNames = groups.Select(group => group.Name).ToArray();
                         groupSelectionScreenView.UpdateGroupNames(groupNames);
                         if (groups.Count > 0)

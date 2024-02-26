@@ -4,7 +4,7 @@ using Extreal.Core.StageNavigation;
 using UniRx;
 using VContainer.Unity;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.App
+namespace Extreal.Integration.Messaging.Socket.IO.MVS.App
 {
     public abstract class StagePresenterBase : DisposableBase, IInitializable
     {

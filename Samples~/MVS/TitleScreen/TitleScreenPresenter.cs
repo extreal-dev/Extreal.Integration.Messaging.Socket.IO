@@ -1,10 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
 using Cysharp.Threading.Tasks;
 using Extreal.Core.StageNavigation;
-using Extreal.Integration.Messaging.Redis.MVS.App;
+using Extreal.Integration.Messaging.Socket.IO.MVS.App;
 using UniRx;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.TitleScreen
+namespace Extreal.Integration.Messaging.Socket.IO.MVS.TitleScreen
 {
     public class TitleScreenPresenter : StagePresenterBase
     {

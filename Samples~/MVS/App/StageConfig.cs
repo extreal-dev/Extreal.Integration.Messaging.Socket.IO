@@ -1,7 +1,7 @@
 ﻿using Extreal.Core.StageNavigation;
 using UnityEngine;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.App
+namespace Extreal.Integration.Messaging.Socket.IO.MVS.App
 {
     [CreateAssetMenu(
         menuName = nameof(MVS) + "/" + nameof(StageConfig),

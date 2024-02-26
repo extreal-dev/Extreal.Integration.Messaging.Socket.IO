@@ -1,16 +1,10 @@
 services:
-    messaging-redis:
-        image: redis:7.2.4-alpine
-        container_name: messaging-redis
-        restart: always
     messaging:
         image: denoland/deno:alpine-1.39.4
         container_name: messaging
         restart: always
         ports:
          - 3030:3030
-        depends_on:
-            - messaging-redis
         environment:
             # If "on" is logging, otherwise is not. In production, set it to "off".
             MESSAGING_LOGGING: ${MESSAGING_LOGGING:-on}

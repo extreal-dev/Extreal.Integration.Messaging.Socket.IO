@@ -2,11 +2,11 @@
 using Cysharp.Threading.Tasks;
 using Extreal.Core.Common.System;
 using Extreal.Core.StageNavigation;
-using Extreal.Integration.Messaging.Redis.MVS.App;
+using Extreal.Integration.Messaging.Socket.IO.MVS.App;
 using UniRx;
 using VContainer.Unity;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.SpaceControl
+namespace Extreal.Integration.Messaging.Socket.IO.MVS.SpaceControl
 {
     public class SpaceControlPresenter : DisposableBase, IInitializable
     {

@@ -1,12 +1,12 @@
 using System;
 using SocketIOClient;
 
-namespace Extreal.Integration.Messaging.Redis
+namespace Extreal.Integration.Messaging.Socket.IO
 {
     /// <summary>
-    /// Class that holds Messaging configuration for Redis.
+    /// Class that holds Messaging configuration for Socket.IO.
     /// </summary>
-    public class RedisMessagingConfig
+    public class SocketIOMessagingConfig
     {
         /// <summary>
         /// URL of the messaging server.
@@ -19,12 +19,12 @@ namespace Extreal.Integration.Messaging.Redis
         public SocketIOOptions SocketIOOptions { get; }
 
         /// <summary>
-        /// Creates a new redis messaging configuration.
+        /// Creates a new Socket.IO messaging configuration.
         /// </summary>
         /// <param name="url">URL of the messaging server.</param>
         /// <param name="socketIOOptions">Socket.IO options.</param>
         /// <exception cref="ArgumentNullException">When url is null.</exception>
-        public RedisMessagingConfig(string url, SocketIOOptions socketIOOptions = default)
+        public SocketIOMessagingConfig(string url, SocketIOOptions socketIOOptions = default)
         {
             if (string.IsNullOrEmpty(url))
             {

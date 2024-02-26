@@ -11,9 +11,9 @@ using UniRx;
 using System.Collections.Generic;
 
 
-namespace Extreal.Integration.Messaging.Redis
+namespace Extreal.Integration.Messaging.Socket.IO
 {
-    public class WebGLRedisMessagingClient : RedisMessagingClient
+    public class WebGLSocketIOMessagingClient : SocketIOMessagingClient
     {
         private WebGLGroupListResponse groupListResponse;
         private int status;
@@ -26,15 +26,15 @@ namespace Extreal.Integration.Messaging.Redis
 
         private readonly string instanceId;
 
-        private static readonly Dictionary<string, WebGLRedisMessagingClient> Instances = new Dictionary<string, WebGLRedisMessagingClient>();
+        private static readonly Dictionary<string, WebGLSocketIOMessagingClient> Instances = new Dictionary<string, WebGLSocketIOMessagingClient>();
 
         [SuppressMessage("Usage", "CC0022")]
-        public WebGLRedisMessagingClient(WebGLRedisMessagingConfig messagingConfig)
+        public WebGLSocketIOMessagingClient(WebGLSocketIOMessagingConfig messagingConfig)
         {
             instanceId = Guid.NewGuid().ToString();
             Instances[instanceId] = this;
 
-            WebGLHelper.CallAction(WithPrefix(nameof(WebGLRedisMessagingClient)), JsonRedisMessagingConfig.ToJson(messagingConfig), instanceId);
+            WebGLHelper.CallAction(WithPrefix(nameof(WebGLSocketIOMessagingClient)), JsonSocketIOMessagingConfig.ToJson(messagingConfig), instanceId);
             WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveGroupListResponse)), ReceiveGroupListResponse);
             WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveJoinResponse)), ReceiveJoinResponse);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnLeaving)), HandleOnLeaving);
@@ -110,7 +110,7 @@ namespace Extreal.Integration.Messaging.Redis
             return result.GroupListResponse;
         }
 
-        protected override async UniTask<string> DoJoinAsync(RedisMessagingJoiningConfig connectionConfig)
+        protected override async UniTask<string> DoJoinAsync(SocketIOMessagingJoiningConfig connectionConfig)
         {
             WebGLHelper.CallAction(WithPrefix(nameof(DoJoinAsync)), JsonJoiningConfig.ToJson(connectionConfig.GroupName), instanceId);
             await UniTask.WaitUntil(() => joinResponse != null, cancellationToken: cancellation.Token);
@@ -139,11 +139,11 @@ namespace Extreal.Integration.Messaging.Redis
             }
         }
 
-        private static string WithPrefix(string name) => $"{nameof(WebGLRedisMessagingClient)}#{name}";
+        private static string WithPrefix(string name) => $"{nameof(WebGLSocketIOMessagingClient)}#{name}";
     }
 
     [SuppressMessage("Usage", "CC0047")]
-    public class JsonRedisMessagingConfig
+    public class JsonSocketIOMessagingConfig
     {
         [JsonPropertyName("url")]
         public string Url { get; set; }
@@ -154,9 +154,9 @@ namespace Extreal.Integration.Messaging.Redis
         [JsonPropertyName("isDebug")]
         public bool IsDebug { get; set; }
 
-        public static string ToJson(WebGLRedisMessagingConfig messagingConfig)
+        public static string ToJson(WebGLSocketIOMessagingConfig messagingConfig)
         {
-            var jsonRedisMessagingConfig = new JsonRedisMessagingConfig
+            var jsonSocketIOMessagingConfig = new JsonSocketIOMessagingConfig
             {
                 Url = messagingConfig.Url,
                 SocketIOOptions = new JsonSocketIOOptions
@@ -166,7 +166,7 @@ namespace Extreal.Integration.Messaging.Redis
                 },
                 IsDebug = messagingConfig.IsDebug,
             };
-            return JsonSerializer.Serialize(jsonRedisMessagingConfig);
+            return JsonSerializer.Serialize(jsonSocketIOMessagingConfig);
         }
     }
 

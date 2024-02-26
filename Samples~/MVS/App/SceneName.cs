@@ -1,4 +1,4 @@
-﻿namespace Extreal.Integration.Messaging.Redis.MVS.App
+﻿namespace Extreal.Integration.Messaging.Socket.IO.MVS.App
 {
     public enum SceneName
     {

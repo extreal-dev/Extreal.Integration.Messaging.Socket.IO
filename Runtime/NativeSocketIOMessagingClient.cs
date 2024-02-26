@@ -4,11 +4,11 @@ using System.Diagnostics.CodeAnalysis;
 using SocketIOClient;
 using System.Threading;
 
-namespace Extreal.Integration.Messaging.Redis
+namespace Extreal.Integration.Messaging.Socket.IO
 {
-    public class NativeRedisMessagingClient : RedisMessagingClient
+    public class NativeSocketIOMessagingClient : SocketIOMessagingClient
     {
-        private readonly RedisMessagingConfig redisMessagingConfig;
+        private readonly SocketIOMessagingConfig socketIOMessagingConfig;
 
         private SocketIO ioClient;
         [SuppressMessage("Usage", "CC0033")]
@@ -20,8 +20,8 @@ namespace Extreal.Integration.Messaging.Redis
         private bool stopSocketInProgress;
 
         [SuppressMessage("Usage", "CC0057")]
-        public NativeRedisMessagingClient(RedisMessagingConfig messagingConfig)
-            => redisMessagingConfig = messagingConfig;
+        public NativeSocketIOMessagingClient(SocketIOMessagingConfig messagingConfig)
+            => socketIOMessagingConfig = messagingConfig;
 
         private async UniTask<SocketIO> GetSocketAsync()
         {
@@ -38,7 +38,7 @@ namespace Extreal.Integration.Messaging.Redis
 
             getSocketInProgress = true;
 
-            ioClient = new SocketIO(redisMessagingConfig.Url, redisMessagingConfig.SocketIOOptions);
+            ioClient = new SocketIO(socketIOMessagingConfig.Url, socketIOMessagingConfig.SocketIOOptions);
 
             ioClient.OnDisconnected += DisconnectEventHandler;
             ioClient.On("client joined", ClientJoinedEventHandler);
@@ -103,7 +103,7 @@ namespace Extreal.Integration.Messaging.Redis
             return groupList;
         }
 
-        protected override async UniTask<string> DoJoinAsync(RedisMessagingJoiningConfig connectionConfig)
+        protected override async UniTask<string> DoJoinAsync(SocketIOMessagingJoiningConfig connectionConfig)
         {
             var message = default(string);
             await (await GetSocketAsync()).EmitAsync(

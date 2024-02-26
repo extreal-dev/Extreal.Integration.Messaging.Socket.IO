@@ -1,2 +1,2 @@
-export * from "./RedisMessagingAdapter";
-export * from "./RedisMessagingClient";
+export * from "./SocketIOMessagingAdapter";
+export * from "./SocketIOMessagingClient";

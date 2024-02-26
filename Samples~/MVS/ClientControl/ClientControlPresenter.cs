@@ -1,10 +1,10 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Cysharp.Threading.Tasks;
 using Extreal.Core.StageNavigation;
-using Extreal.Integration.Messaging.Redis.MVS.App;
+using Extreal.Integration.Messaging.Socket.IO.MVS.App;
 using UniRx;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.ClientControl
+namespace Extreal.Integration.Messaging.Socket.IO.MVS.ClientControl
 {
     public class ClientControlPresenter : StagePresenterBase
     {
@@ -25,29 +25,29 @@ namespace Extreal.Integration.Messaging.Redis.MVS.ClientControl
             AppState appState,
             CompositeDisposable sceneDisposables)
         {
-            foreach (var redisMessagingClient in clientCollection.Clients)
+            foreach (var socketIOMessagingClient in clientCollection.Clients)
             {
-                redisMessagingClient.OnJoined
+                socketIOMessagingClient.OnJoined
                     .Subscribe(userId => appState.NotifyInfo($"Joined: userId={userId}"))
                     .AddTo(sceneDisposables);
 
-                redisMessagingClient.OnLeaving
+                socketIOMessagingClient.OnLeaving
                     .Subscribe(reason => appState.NotifyInfo($"Leaving: reason={reason}"))
                     .AddTo(sceneDisposables);
 
-                redisMessagingClient.OnUnexpectedLeft
+                socketIOMessagingClient.OnUnexpectedLeft
                     .Subscribe(reason => appState.Notify($"Unexpectedly left: reason={reason}"))
                     .AddTo(sceneDisposables);
 
-                redisMessagingClient.OnJoiningApprovalRejected
+                socketIOMessagingClient.OnJoiningApprovalRejected
                     .Subscribe(_ => appState.Notify("Group is full."))
                     .AddTo(sceneDisposables);
 
-                redisMessagingClient.OnClientJoined
+                socketIOMessagingClient.OnClientJoined
                     .Subscribe(userId => appState.NotifyInfo($"User joined: userId={userId}"))
                     .AddTo(sceneDisposables);
 
-                redisMessagingClient.OnClientLeaving
+                socketIOMessagingClient.OnClientLeaving
                     .Subscribe(userId => appState.NotifyInfo($"User is leaving: userId={userId}"))
                     .AddTo(sceneDisposables);
             }

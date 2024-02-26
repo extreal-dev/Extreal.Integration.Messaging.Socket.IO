@@ -11,5 +11,5 @@
   </assembly>
   <assembly fullname="Extreal.Integration.Web.Common" preserve="all" />
   <assembly fullname="Extreal.Integration.Messaging" preserve="all" />
-  <assembly fullname="Extreal.Integration.Messaging.Redis" preserve="all" />
+  <assembly fullname="Extreal.Integration.Messaging.Socket.IO" preserve="all" />
 </linker>

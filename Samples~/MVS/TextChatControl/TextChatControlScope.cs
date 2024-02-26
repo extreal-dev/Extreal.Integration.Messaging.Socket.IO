@@ -2,7 +2,7 @@
 using VContainer;
 using VContainer.Unity;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.TextChatControl
+namespace Extreal.Integration.Messaging.Socket.IO.MVS.TextChatControl
 {
     public class TextChatControlScope : LifetimeScope
     {

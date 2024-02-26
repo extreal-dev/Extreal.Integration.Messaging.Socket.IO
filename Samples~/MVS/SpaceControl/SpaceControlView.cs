@@ -3,7 +3,7 @@ using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.SpaceControl
+namespace Extreal.Integration.Messaging.Socket.IO.MVS.SpaceControl
 {
     public class SpaceControlView : MonoBehaviour
     {

@@ -1,6 +1,6 @@
 {
-    "name": "Extreal.Integration.Messaging.Redis.MVS",
-    "rootNamespace": "Extreal.Integration.Messaging.Redis.MVS",
+    "name": "Extreal.Integration.Messaging.Socket.IO.MVS",
+    "rootNamespace": "Extreal.Integration.Messaging.Socket.IO.MVS",
     "references": [
         "Cinemachine",
         "Unity.Addressables",
@@ -17,7 +17,7 @@
         "Extreal.Core.Common",
         "Extreal.Integration.Web.Common",
         "Extreal.Integration.Messaging",
-        "Extreal.Integration.Messaging.Redis"
+        "Extreal.Integration.Messaging.Socket.IO"
     ],
     "includePlatforms": [
         "Android",

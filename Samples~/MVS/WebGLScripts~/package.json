@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@extreal-dev/extreal.integration.messaging.redis": "../../../../../../Packages/Extreal.Integration.Messaging.Redis/WebScripts~/"
+    "@extreal-dev/extreal.integration.messaging.socket.io": "../../../../../../Packages/Extreal.Integration.Messaging.Socket.IO/WebScripts~/"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.1.0",
