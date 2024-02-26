@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Extreal.Core.StageNavigation;
-using Extreal.Integration.Messaging.Redis.MVS.App;
+using Extreal.Integration.Messaging.Socket.IO.MVS.App;
 using UniRx;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.NotificationControl
+namespace Extreal.Integration.Messaging.Socket.IO.MVS.NotificationControl
 {
     public class NotificationControlPresenter : StagePresenterBase
     {

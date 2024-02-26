@@ -1,7 +1,7 @@
 {
-  "name": "jp.co.tis.extreal.integration.messaging.redis",
-  "version": "1.0.0-next.4",
-  "displayName": "Extreal.Integration.Messaging.Redis",
+  "name": "jp.co.tis.extreal.integration.messaging.socket.io",
+  "version": "1.0.0-next.5",
+  "displayName": "Extreal.Integration.Messaging.Socket.IO",
   "unity": "2022.3",
   "author": {
     "name": "TIS Inc."

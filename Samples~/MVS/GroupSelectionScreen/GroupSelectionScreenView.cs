@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Extreal.Integration.Messaging.Redis.MVS.App;
+using Extreal.Integration.Messaging.Socket.IO.MVS.App;
 using TMPro;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.GroupSelectionScreen
+namespace Extreal.Integration.Messaging.Socket.IO.MVS.GroupSelectionScreen
 {
     public class GroupSelectionScreenView : MonoBehaviour
     {

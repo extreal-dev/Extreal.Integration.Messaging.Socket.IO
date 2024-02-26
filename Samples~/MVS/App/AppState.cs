@@ -4,7 +4,7 @@ using Extreal.Core.Common.System;
 using Extreal.Core.Logging;
 using UniRx;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.App
+namespace Extreal.Integration.Messaging.Socket.IO.MVS.App
 {
     [SuppressMessage("Usage", "CC0033")]
     public class AppState : DisposableBase

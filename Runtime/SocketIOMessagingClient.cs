@@ -3,14 +3,14 @@ using Extreal.Core.Logging;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
-namespace Extreal.Integration.Messaging.Redis
+namespace Extreal.Integration.Messaging.Socket.IO
 {
     /// <summary>
-    /// Class that implements MessagingClient using Redis.
+    /// Class that implements MessagingClient using Socket.IO.
     /// </summary>
-    public abstract class RedisMessagingClient : MessagingClient
+    public abstract class SocketIOMessagingClient : MessagingClient
     {
-        private static readonly ELogger Logger = LoggingManager.GetLogger(nameof(RedisMessagingClient));
+        private static readonly ELogger Logger = LoggingManager.GetLogger(nameof(SocketIOMessagingClient));
 
         protected sealed override async UniTask DoJoinAsync(MessagingJoiningConfig joiningConfig)
         {
@@ -19,7 +19,7 @@ namespace Extreal.Integration.Messaging.Redis
                 Logger.LogDebug($"Join: GroupName={joiningConfig.GroupName}");
             }
 
-            var message = await DoJoinAsync(new RedisMessagingJoiningConfig(joiningConfig));
+            var message = await DoJoinAsync(new SocketIOMessagingJoiningConfig(joiningConfig));
 
             if (message == "rejected")
             {
@@ -32,7 +32,7 @@ namespace Extreal.Integration.Messaging.Redis
 
         protected abstract string GetClientId();
 
-        protected abstract UniTask<string> DoJoinAsync(RedisMessagingJoiningConfig redisMessagingJoiningConfig);
+        protected abstract UniTask<string> DoJoinAsync(SocketIOMessagingJoiningConfig socketIOMessagingJoiningConfig);
 
         protected sealed override async UniTask DoSendMessageAsync(string message, string to)
         {
@@ -59,9 +59,9 @@ namespace Extreal.Integration.Messaging.Redis
             public string MessageContent { get; set; }
         }
 
-        public class RedisMessagingJoiningConfig : MessagingJoiningConfig
+        public class SocketIOMessagingJoiningConfig : MessagingJoiningConfig
         {
-            public RedisMessagingJoiningConfig(MessagingJoiningConfig messagingJoiningConfig)
+            public SocketIOMessagingJoiningConfig(MessagingJoiningConfig messagingJoiningConfig)
                 : base(messagingJoiningConfig.GroupName)
             {
             }

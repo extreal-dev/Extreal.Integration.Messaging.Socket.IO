@@ -1,4 +1,4 @@
-# Extreal.Integration.Messaging.Redis
+# Extreal.Integration.Messaging.Socket.IO
 
 ## How to test
 
@@ -21,7 +21,7 @@
 - Open `Build Settings` and change the platform to `WebGL`.
 - Select `Dev` from `Player Settings > Resolution and Presentation > WebGL Template`.
 - Add all scenes in MVS to `Scenes In Build`.
-- Start a Messaging Server by running the command below in `RedisServer~` directory.
+- Start a Messaging Server by running the command below in `MessagingServer~` directory.
   - `docker compose up -d`
 - Play
   - Native

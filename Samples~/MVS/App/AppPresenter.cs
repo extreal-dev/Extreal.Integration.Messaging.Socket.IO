@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 using Extreal.Core.StageNavigation;
 using VContainer.Unity;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.App
+namespace Extreal.Integration.Messaging.Socket.IO.MVS.App
 {
     public class AppPresenter : IStartable
     {

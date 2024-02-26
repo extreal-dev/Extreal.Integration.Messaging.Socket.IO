@@ -1,6 +1,6 @@
 import { io, Socket, SocketOptions, ManagerOptions } from "socket.io-client";
 
-type RedisMessagingConfig = {
+type SocketIOMessagingConfig = {
   url: string;
   socketIOOptions: SocketOptions & ManagerOptions;
   isDebug: boolean;
@@ -26,7 +26,7 @@ type Message = {
   messageContent: string;
 };
 
-type RedisMessagingClientCallbacks = {
+type SocketIOMessagingClientCallbacks = {
   onLeaving: (reason: string) => void;
   onUnexpectedLeft: (reason: string) => void;
   onClientJoined: (clientId: string) => void;
@@ -35,18 +35,18 @@ type RedisMessagingClientCallbacks = {
   stopSocket: () => void;
 };
 
-class RedisMessagingClient {
+class SocketIOMessagingClient {
   private readonly isDebug: boolean;
 
-  private readonly redisMessagingConfig: RedisMessagingConfig;
+  private readonly socketIOMessagingConfig: SocketIOMessagingConfig;
   private socket: Socket | null;
 
-  private readonly callbacks: RedisMessagingClientCallbacks;
+  private readonly callbacks: SocketIOMessagingClientCallbacks;
 
-  constructor(redisMessagingConfig: RedisMessagingConfig, callbacks: RedisMessagingClientCallbacks) {
+  constructor(socketIOMessagingConfig: SocketIOMessagingConfig, callbacks: SocketIOMessagingClientCallbacks) {
     this.socket = null;
-    this.redisMessagingConfig = redisMessagingConfig;
-    this.isDebug = redisMessagingConfig.isDebug;
+    this.socketIOMessagingConfig = socketIOMessagingConfig;
+    this.isDebug = socketIOMessagingConfig.isDebug;
     this.callbacks = callbacks;
   }
 
@@ -58,7 +58,7 @@ class RedisMessagingClient {
       this.stopSocket();
     }
 
-    const socket = io(this.redisMessagingConfig.url, this.redisMessagingConfig.socketIOOptions);
+    const socket = io(this.socketIOMessagingConfig.url, this.socketIOMessagingConfig.socketIOOptions);
     this.socket = socket;
 
     this.socket.on("disconnect", this.receiveDisconnect);
@@ -173,4 +173,4 @@ class RedisMessagingClient {
   public getClientId = (() => this.socket?.id ?? "");
 }
 
-export { RedisMessagingClient };
+export { SocketIOMessagingClient };

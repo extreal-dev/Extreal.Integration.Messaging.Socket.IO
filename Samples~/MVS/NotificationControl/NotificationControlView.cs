@@ -5,7 +5,7 @@ using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.NotificationControl
+namespace Extreal.Integration.Messaging.Socket.IO.MVS.NotificationControl
 {
     public class NotificationControlView : MonoBehaviour
     {

@@ -1,6 +1,6 @@
 {
-    "name": "Extreal.Integration.Messaging.Redis",
-    "rootNamespace": "Extreal.Integration.Messaging.Redis",
+    "name": "Extreal.Integration.Messaging.Socket.IO",
+    "rootNamespace": "Extreal.Integration.Messaging.Socket.IO",
     "references": [
         "Extreal.Core.Logging",
         "Extreal.Core.Common",

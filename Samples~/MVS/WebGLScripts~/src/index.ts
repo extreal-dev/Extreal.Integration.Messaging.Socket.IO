@@ -1,4 +1,4 @@
-import { RedisMessagingAdapter } from "@extreal-dev/extreal.integration.messaging.redis";
+import { SocketIOMessagingAdapter } from "@extreal-dev/extreal.integration.messaging.socket.io";
 
-const redisMessagingAdapter = new RedisMessagingAdapter();
-redisMessagingAdapter.adapt();
+const socketIOMessagingAdapter = new SocketIOMessagingAdapter();
+socketIOMessagingAdapter.adapt();

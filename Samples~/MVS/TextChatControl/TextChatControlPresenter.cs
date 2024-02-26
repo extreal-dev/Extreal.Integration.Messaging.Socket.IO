@@ -2,16 +2,16 @@
 using UniRx;
 using VContainer.Unity;
 using Extreal.Core.StageNavigation;
-using Extreal.Integration.Messaging.Redis.MVS.App;
+using Extreal.Integration.Messaging.Socket.IO.MVS.App;
 using Cysharp.Threading.Tasks;
 using System;
 
-namespace Extreal.Integration.Messaging.Redis.MVS.TextChatControl
+namespace Extreal.Integration.Messaging.Socket.IO.MVS.TextChatControl
 {
     public class TextChatControlPresenter : StagePresenterBase, IInitializable
     {
-        private readonly RedisMessagingClient redisMessagingClient1;
-        private readonly RedisMessagingClient redisMessagingClient2;
+        private readonly SocketIOMessagingClient socketIOMessagingClient1;
+        private readonly SocketIOMessagingClient socketIOMessagingClient2;
         private readonly TextChatControlView textChatControlView;
         private readonly ClientCollection clientCollection;
         public TextChatControlPresenter
@@ -22,8 +22,8 @@ namespace Extreal.Integration.Messaging.Redis.MVS.TextChatControl
             AppState appState
         ) : base(stageNavigator, appState)
         {
-            redisMessagingClient1 = clientCollection.Clients.First();
-            redisMessagingClient2 = clientCollection.Clients.Last();
+            socketIOMessagingClient1 = clientCollection.Clients.First();
+            socketIOMessagingClient2 = clientCollection.Clients.Last();
             this.textChatControlView = textChatControlView;
         }
 
@@ -37,22 +37,22 @@ namespace Extreal.Integration.Messaging.Redis.MVS.TextChatControl
                     UnityEngine.Debug.Log(message.Split('-').ToList().Last());
                     if (textChatControlView.FromClient1)
                     {
-                        redisMessagingClient1.SendMessageAsync(message).Forget();
+                        socketIOMessagingClient1.SendMessageAsync(message).Forget();
                     }
                     if (textChatControlView.FromClient2)
                     {
-                        redisMessagingClient2.SendMessageAsync(message).Forget();
+                        socketIOMessagingClient2.SendMessageAsync(message).Forget();
                     }
 
                     textChatControlView.ShowSentMessage(message);
                 })
                 .AddTo(sceneDisposables);
 
-            redisMessagingClient1.OnMessageReceived
+            socketIOMessagingClient1.OnMessageReceived
                 .Subscribe(textChatControlView.ShowReceivedMessage)
                 .AddTo(sceneDisposables);
 
-            redisMessagingClient2.OnMessageReceived
+            socketIOMessagingClient2.OnMessageReceived
                 .Subscribe(textChatControlView.ShowReceivedMessage)
                 .AddTo(sceneDisposables);
 
@@ -64,8 +64,8 @@ namespace Extreal.Integration.Messaging.Redis.MVS.TextChatControl
             try
             {
                 var messagingConfig = new MessagingJoiningConfig(appState.GroupName);
-                await redisMessagingClient1.JoinAsync(messagingConfig);
-                await redisMessagingClient2.JoinAsync(messagingConfig);
+                await socketIOMessagingClient1.JoinAsync(messagingConfig);
+                await socketIOMessagingClient2.JoinAsync(messagingConfig);
             }
             catch (Exception e)
             {
@@ -75,8 +75,8 @@ namespace Extreal.Integration.Messaging.Redis.MVS.TextChatControl
 
         protected override void OnStageExiting(StageName stageName, AppState appState) => UniTask.Void(async () =>
         {
-            await redisMessagingClient1.LeaveAsync();
-            await redisMessagingClient2.LeaveAsync();
+            await socketIOMessagingClient1.LeaveAsync();
+            await socketIOMessagingClient2.LeaveAsync();
         });
     }
 }
