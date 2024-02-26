@@ -7,6 +7,7 @@ const maxCapacity = parseInt(Deno.env.get("MESSAGING_MAX_CAPACITY")) || 100;
 type Message = {
     from: string;
     to: string;
+    messageContent: string;
 };
 
 type ListGroupsResponse = {
@@ -65,9 +66,9 @@ io.on("connection", async (socket: Socket) => {
                 return;
             }
 
-            callback("approved");
             log(() => `join: clientId=${socket.id}, groupName=${groupName}`);
             await socket.join(groupName);
+            callback("approved");
             socket.to(groupName).emit("client joined", socket.id);
         }
     );
