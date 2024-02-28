@@ -13,7 +13,6 @@ class SocketIOMessagingAdapter {
       this.socketIOMessagingClients.set(
         instanceId,
         new SocketIOMessagingClient(socketIOMessagingConfig, {
-          onLeaving: (reason) => callback(this.withPrefix("HandleOnLeaving"), reason, instanceId),
           onUnexpectedLeft: (reason) =>
             callback(this.withPrefix("HandleOnUnexpectedLeft"), reason, instanceId),
           onClientJoined: (clientId) => callback(this.withPrefix("HandleOnClientJoined"), clientId, instanceId),

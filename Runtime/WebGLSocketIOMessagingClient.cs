@@ -37,7 +37,6 @@ namespace Extreal.Integration.Messaging.Socket.IO
             WebGLHelper.CallAction(WithPrefix(nameof(WebGLSocketIOMessagingClient)), JsonSocketIOMessagingConfig.ToJson(messagingConfig), instanceId);
             WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveGroupListResponse)), ReceiveGroupListResponse);
             WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveJoinResponse)), ReceiveJoinResponse);
-            WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnLeaving)), HandleOnLeaving);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnUnexpectedLeft)), HandleOnUnexpectedLeft);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnClientJoined)), HandleOnClientJoined);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnClientLeaving)), HandleOnClientLeaving);
@@ -53,11 +52,6 @@ namespace Extreal.Integration.Messaging.Socket.IO
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void ReceiveJoinResponse(string joinResponse, string instanceId)
             => Instances[instanceId].joinResponse = JsonSerializer.Deserialize<WebGLJoinResponse>(joinResponse);
-
-
-        [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void HandleOnLeaving(string reason, string instanceId)
-            => Instances[instanceId].FireOnLeaving(reason);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void HandleOnUnexpectedLeft(string reason, string instanceId)
