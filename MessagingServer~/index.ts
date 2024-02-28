@@ -69,7 +69,16 @@ io.on("connection", async (socket: Socket) => {
             log(() => `join: clientId=${socket.id}, groupName=${groupName}`);
             await socket.join(groupName);
             callback("approved");
-            socket.to(groupName).emit("client joined", socket.id);
+            const members = rooms().get(groupName);
+            if (members) {
+                for (const member of members) {
+                    if (member === socket.id) {
+                        continue;
+                    }
+                    socket.to(member).emit("client joined", socket.id);
+                    socket.emit("client joined", member);
+                }
+            }
         }
     );
 
