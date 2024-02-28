@@ -27,7 +27,6 @@ type Message = {
 };
 
 type SocketIOMessagingClientCallbacks = {
-  onLeaving: (reason: string) => void;
   onUnexpectedLeft: (reason: string) => void;
   onClientJoined: (clientId: string) => void;
   onClientLeaving: (clientId: string) => void;
@@ -142,11 +141,6 @@ class SocketIOMessagingClient {
       console.log(`Receive disconnect: reason=${reason}`);
     }
     this.callbacks.onUnexpectedLeft(reason);
-  };
-
-  public receiveDeleteGroup = () => {
-    this.callbacks.onLeaving("delete group");
-    this.stopSocket();
   };
 
   private receiveClientJoined = (clientId: string) => {
